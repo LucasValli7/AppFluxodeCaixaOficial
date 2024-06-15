@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Escolha o ano"
+        android:paddingBottom="8dp" />
+
+    <Spinner
+        android:id="@+id/year_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Escolha o mês"
+        android:paddingTop="16dp"
+        android:paddingBottom="8dp" />
+
+    <Spinner
+        android:id="@+id/month_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Escolha o tipo de movimentação"
+        android:paddingBottom="8dp" />
+
+    <Spinner
+        android:id="@+id/type_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+
+    <TextView
+        android:id="@+id/titulo_category"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Escolha a categoria"
+        android:paddingTop="16dp"
+        android:paddingBottom="8dp"
+        android:visibility="visible"/>
+
+
+    <Spinner
+        android:id="@+id/category_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+</LinearLayout>
