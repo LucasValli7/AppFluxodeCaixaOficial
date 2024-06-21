@@ -162,6 +162,7 @@ public class TelaPrincipal extends AppCompatActivity {
             binding.progressBar.setVisibility(View.VISIBLE);
             return false;
         }else {
+            /**/
             Initialize();
             RecuperarDadosUsuario();
             RecuperarTotalSaidasResumo();
@@ -459,7 +460,7 @@ public class TelaPrincipal extends AppCompatActivity {
     public void LoadInterticialAd(){
         AdRequest adRequest = new AdRequest.Builder().build();
 
-        InterstitialAd.load(this,String.valueOf(R.string.admob_id_teste), adRequest,
+        InterstitialAd.load(this,String.valueOf("ca-app-pub-3940256099942544/1033173712"), adRequest,
                 new InterstitialAdLoadCallback() {
                     @Override
                     public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {

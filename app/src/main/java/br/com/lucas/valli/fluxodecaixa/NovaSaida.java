@@ -129,7 +129,7 @@ public class NovaSaida extends AppCompatActivity {
                             // Lógica para quando o radioButton1 é selecionado
                             String titulo = binding.editNovaSaida.getText().toString();
                             String valor = binding.editNovoValor.getText().toString();
-                            scheduleNotification("Pagar " + titulo + " no valor de " + "R$ " + valor);
+                            scheduleNotification("Pagar \" " + titulo + "\" no valor de " + "R$ " + valor);
                         }
                     }).setNegativeButton("Não", new DialogInterface.OnClickListener() {
                         @Override
@@ -214,7 +214,7 @@ public class NovaSaida extends AppCompatActivity {
     public void LoadInterticialAd(){
         AdRequest adRequest = new AdRequest.Builder().build();
 
-        InterstitialAd.load(this,String.valueOf(R.string.admob_id_teste), adRequest,
+        InterstitialAd.load(this,String.valueOf("ca-app-pub-3940256099942544/1033173712"), adRequest,
                 new InterstitialAdLoadCallback() {
                     @Override
                     public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {

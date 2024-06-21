@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Fluxo de Caixa</string>
     <string name="admob_id">ca-app-pub-7099783455876849/3315422269</string>
-    <string name="admob_id_teste">ca-app-pub-3940256099942544~3347511713</string>
+    <string name="admob_id_teste">ca-app-pub-3940256099942544/1033173712</string>
     />
     <string name="default_notification_channel_id" translatable="false">fcm_default_channel</string>
     />

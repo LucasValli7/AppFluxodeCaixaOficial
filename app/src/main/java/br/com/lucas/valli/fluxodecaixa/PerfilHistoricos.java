@@ -139,7 +139,6 @@ public class PerfilHistoricos extends AppCompatActivity {
         return networkInfo.isConnected();
 
     }
-
     private void showCustomDialogDelet(){
         // Infla o layout personalizado
         LayoutInflater inflater = getLayoutInflater();
@@ -644,7 +643,7 @@ public class PerfilHistoricos extends AppCompatActivity {
     public void LoadInterticialAd(){
         AdRequest adRequest = new AdRequest.Builder().build();
 
-        InterstitialAd.load(this,String.valueOf(R.string.admob_id_teste), adRequest,
+        InterstitialAd.load(this,String.valueOf("ca-app-pub-3940256099942544/1033173712"), adRequest,
                 new InterstitialAdLoadCallback() {
                     @Override
                     public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
