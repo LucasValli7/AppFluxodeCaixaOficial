@@ -57,7 +57,7 @@
             android:gravity="start"
             android:maxLines="1"
             android:padding="5dp"
-            android:text="App Fluxo de Caixa"
+            android:text=""
             android:textColor="@color/black"
             android:textSize="15sp"
             android:textStyle="bold"

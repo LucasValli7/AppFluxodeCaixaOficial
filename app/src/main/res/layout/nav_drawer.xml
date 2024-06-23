@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+
+<androidx.core.widget.NestedScrollView
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:fillViewport="true"
+    android:background="@color/white">
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:background="@drawable/drawer_border"
@@ -32,7 +43,7 @@
                 android:id="@+id/nomeUsuario"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="lucas valli azevedo"
+                android:text=""
                 android:textSize="15sp"
                 android:textStyle="bold"
                 android:textColor="@color/white"/>
@@ -273,7 +284,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_margin="12dp"
+        android:layout_margin="5dp"
         android:background="@color/black"/>
 
     <LinearLayout
@@ -281,7 +292,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:layout_marginTop="12dp"
         android:orientation="horizontal">
 
         <ImageView
@@ -302,3 +312,4 @@
     </LinearLayout>
 
 </LinearLayout>
+</androidx.core.widget.NestedScrollView>
