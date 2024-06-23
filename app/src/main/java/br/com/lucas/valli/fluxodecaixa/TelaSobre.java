@@ -88,7 +88,7 @@ public class TelaSobre extends AppCompatActivity {
                             });
                         }
                     } else {
-                        Log.i("TESTEFIREBASE", "NÃO HÁ DADOS");
+                        Log.i("DADOSFB", "NÃO HÁ DADOS");
                     }
                 }
             }

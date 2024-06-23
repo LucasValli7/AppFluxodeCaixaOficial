@@ -58,9 +58,9 @@ public class MyfirebaseMessagingService extends FirebaseMessagingService {
         if (targetActivity != null) {
             // Cria um Intent para abrir a tela correspondente
             Intent intent = new Intent(this, targetActivity);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP );
 
-            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
             // Cria a notificação
             String channelId = getString(R.string.default_notification_channel_id);
