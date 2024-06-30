@@ -31,10 +31,10 @@
         app:layout_constraintTop_toBottomOf="@+id/tolbar" />
 
     <TextView
-        android:id="@+id/textView"
+        android:id="@+id/txtVersaoAtual"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Versão atual 1.0"
+        android:text=""
         android:textColor="@color/black"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"

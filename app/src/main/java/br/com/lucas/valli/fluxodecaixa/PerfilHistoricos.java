@@ -379,7 +379,7 @@ public class PerfilHistoricos extends AppCompatActivity {
 
                     }
                 })
-                .setNegativeButton("Cancel", null);
+                .setNegativeButton("Cancelar", null);
         binding.progressBar.setVisibility(View.GONE);
 
         androidx.appcompat.app.AlertDialog dialog = builder.create();
@@ -626,7 +626,7 @@ public class PerfilHistoricos extends AppCompatActivity {
 
                     }
                 })
-                .setNegativeButton("Cancel", null);
+                .setNegativeButton("Cancelar", null);
         binding.progressBar.setVisibility(View.GONE);
 
         androidx.appcompat.app.AlertDialog dialog = builder.create();
@@ -643,7 +643,7 @@ public class PerfilHistoricos extends AppCompatActivity {
     public void LoadInterticialAd(){
         AdRequest adRequest = new AdRequest.Builder().build();
 
-        InterstitialAd.load(this,String.valueOf("ca-app-pub-3940256099942544/1033173712"), adRequest,
+        InterstitialAd.load(this,("ca-app-pub-3940256099942544/1033173712"), adRequest,
                 new InterstitialAdLoadCallback() {
                     @Override
                     public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {

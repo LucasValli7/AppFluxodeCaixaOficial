@@ -9,7 +9,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -23,15 +22,12 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import br.com.lucas.valli.fluxodecaixa.ContasAPagar;
 import br.com.lucas.valli.fluxodecaixa.ContasAReceber;
-import br.com.lucas.valli.fluxodecaixa.Model.SalvarPorcentagemE;
 import br.com.lucas.valli.fluxodecaixa.R;
 
 public class FragmentContasAReceber extends Fragment {

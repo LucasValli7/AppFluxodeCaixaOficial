@@ -852,7 +852,7 @@ public class ContasAPagar extends AppCompatActivity {
 
                     }
                 })
-                .setNegativeButton("Cancel", null);
+                .setNegativeButton("Cancelar", null);
 
         androidx.appcompat.app.AlertDialog dialog = builder.create();
         dialog.show();

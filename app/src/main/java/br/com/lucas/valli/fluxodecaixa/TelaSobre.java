@@ -30,6 +30,8 @@ public class TelaSobre extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         DadosAtualizacaoApp();
+        String versaoInstalada = getInstalledVersion();
+        binding.txtVersaoAtual.setText("versão atual instalada " +versaoInstalada);
 
     }
 
