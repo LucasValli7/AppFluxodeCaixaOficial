@@ -18,7 +18,7 @@ public class AlarmPagar extends BroadcastReceiver {
         // Obter o título e o texto da notificação dos extras do intent
         String text = intent.getStringExtra("notification_text");
 
-        // Crie e exiba a notificação com o título e o texto obtidos
+        // Crie e exiba a notificação com o título e o texto obtidos!!
         createNotification(context, text);
     }
 
