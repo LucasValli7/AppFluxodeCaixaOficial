@@ -55,6 +55,7 @@ public class AdapterContasAreceber extends RecyclerView.Adapter<AdapterContasAre
         holder.dataItemSaida.setText(contasAreceberList.get(position).getDataDeEntrada());
         holder.tipoDeSaida.setText(contasAreceberList.get(position).getTipoDeEntrada());
         holder.valorDeSaida.setText(contasAreceberList.get(position).getValorDeEntrada());
+        holder.dataVencimento.setText(contasAreceberList.get(position).getDataVencimento());
 
     }
 
@@ -67,7 +68,7 @@ public class AdapterContasAreceber extends RecyclerView.Adapter<AdapterContasAre
 
     public class DadosViewHolder extends RecyclerView.ViewHolder{
 
-        private TextView dataItemSaida, tipoDeSaida, valorDeSaida, formPagamento;
+        private TextView dataItemSaida, tipoDeSaida, valorDeSaida, formPagamento, dataVencimento;
 
 
 
@@ -76,6 +77,7 @@ public class AdapterContasAreceber extends RecyclerView.Adapter<AdapterContasAre
             dataItemSaida = itemView.findViewById(R.id.item_valorDataSaida);
             tipoDeSaida = itemView.findViewById(R.id.txt_valorTipoSaida);
             valorDeSaida = itemView.findViewById(R.id.txt_valorSaida);
+            dataVencimento = itemView.findViewById(R.id.txt_dataVencimento);
 
 
         }

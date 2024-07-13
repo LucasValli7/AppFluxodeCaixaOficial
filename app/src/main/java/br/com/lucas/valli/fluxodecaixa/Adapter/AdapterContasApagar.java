@@ -57,6 +57,7 @@ public class AdapterContasApagar extends RecyclerView.Adapter<AdapterContasApaga
         holder.dataItemSaida.setText(contasApagarList.get(position).getDataDeSaida());
         holder.tipoDeSaida.setText(contasApagarList.get(position).getTipoDeSaida());
         holder.valorDeSaida.setText(contasApagarList.get(position).getValorDeSaida());
+        holder.dataVencimento.setText(contasApagarList.get(position).getDataVencimento());
 
     }
 
@@ -69,7 +70,7 @@ public class AdapterContasApagar extends RecyclerView.Adapter<AdapterContasApaga
 
     public class DadosViewHolder extends RecyclerView.ViewHolder{
 
-        private TextView dataItemSaida, tipoDeSaida, valorDeSaida, formPagamento;
+        private TextView dataItemSaida, tipoDeSaida, valorDeSaida, formPagamento, dataVencimento;
 
 
 
@@ -78,6 +79,7 @@ public class AdapterContasApagar extends RecyclerView.Adapter<AdapterContasApaga
             dataItemSaida = itemView.findViewById(R.id.item_valorDataSaida);
             tipoDeSaida = itemView.findViewById(R.id.txt_valorTipoSaida);
             valorDeSaida = itemView.findViewById(R.id.txt_valorSaida);
+            dataVencimento = itemView.findViewById(R.id.txt_dataVencimento);
 
 
         }

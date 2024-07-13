@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="80dp"
+    android:layout_height="105dp"
     android:layout_marginTop="2dp"
     android:layout_marginBottom="2dp"
     android:layout_marginStart="5dp"
@@ -29,6 +29,32 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/txt_valorTipoSaida" />
 
+        <TextView
+            android:id="@+id/txt_vencimento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_marginStart="30dp"
+            android:text="Data de vencimento"
+            android:textColor="@color/blacl_ligth"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/txt_dataVencimento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:text="10/05/2024"
+            android:textColor="@color/blacl_ligth"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:layout_marginEnd="30dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
 
         <TextView
             android:id="@+id/txt_valorTipoSaida"
@@ -41,7 +67,7 @@
             android:layout_marginTop="5dp"
             android:layout_marginStart="15dp"
             app:layout_constraintStart_toEndOf="@id/img_saida"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/txt_vencimento" />
 
 
         <TextView

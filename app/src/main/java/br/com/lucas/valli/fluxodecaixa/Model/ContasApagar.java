@@ -6,6 +6,18 @@ public class ContasApagar {
     private String ValorDeSaida;
     private String dataDeSaida;
     private String formPagamento;
+    private String dataVencimento;
+
+
+    public String getDataVencimento() {
+        return dataVencimento;
+    }
+
+    public void setDataVencimento(String dataVencimento) {
+        this.dataVencimento = dataVencimento;
+    }
+
+
 
     public String getFormPagamento() {
         return formPagamento;

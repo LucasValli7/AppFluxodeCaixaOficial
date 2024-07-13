@@ -163,7 +163,6 @@ public class TelaPrincipal extends AppCompatActivity {
             return false;
         }else {
             /**/
-            Initialize();
             RecuperarDadosUsuario();
             RecuperarTotalSaidasResumo();
             binding.progressBar.setVisibility(View.GONE);

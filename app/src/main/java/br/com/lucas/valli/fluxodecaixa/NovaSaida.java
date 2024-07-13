@@ -120,31 +120,40 @@ public class NovaSaida extends AppCompatActivity {
                 binding.progressBar.setVisibility(View.GONE);
 
                 if (binding.checksSim.isChecked()) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(NovaSaida.this);
-                    builder.setTitle("Deseja adicionar um lembrete de pagamento?");
-                    builder.setCancelable(false);
-                    builder.setPositiveButton("Sim", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            // Lógica para quando o radioButton1 é selecionado
-                            String titulo = binding.editNovaSaida.getText().toString();
-                            String valor = binding.editNovoValor.getText().toString();
-                            scheduleNotification("Pagar \" " + titulo + "\" no valor de " + "R$ " + valor);
-                        }
-                    }).setNegativeButton("Não", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            Intent intent = new Intent(NovaSaida.this, TelaPrincipal.class);
-                            finish();
-                        }
-                    }).show();
+                    String dataVencimento = binding.txtDataVencimento.getText().toString();
+                    if (!dataVencimento.isEmpty()){
+
+
+                        AlertDialog.Builder builder = new AlertDialog.Builder(NovaSaida.this);
+                        builder.setTitle("Deseja adicionar um lembrete de pagamento?");
+                        builder.setCancelable(false);
+                        builder.setPositiveButton("Sim", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // Lógica para quando o radioButton1 é selecionado
+                                String titulo = binding.editNovaSaida.getText().toString();
+                                String valor = binding.editNovoValor.getText().toString();
+                                scheduleNotification("Pagar \" " + titulo + "\" no valor de " + "R$ " + valor);
+                            }
+                        }).setNegativeButton("Não", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Intent intent = new Intent(NovaSaida.this, TelaPrincipal.class);
+                                finish();
+                            }
+                        }).show();
+
+                    }else {
+                        Toast.makeText(this, "Preencha o campo data de vencimento", Toast.LENGTH_SHORT).show();
+                    }
+
                 }else {
                     finish();
                 }
 
         } else {
 
-                Snackbar snackbar = Snackbar.make(getWindow().getDecorView(),"Preencha o campo Contas a Receber",Snackbar.LENGTH_INDEFINITE)
+                Snackbar snackbar = Snackbar.make(getWindow().getDecorView(),"Preencha o campo Contas a Pagar",Snackbar.LENGTH_INDEFINITE)
                         .setAction("OK", new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
@@ -182,6 +191,12 @@ public class NovaSaida extends AppCompatActivity {
         FormaPagamento();
         Categoria();
 
+        binding.txtDataVencimento.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                abrirCalendar();
+            }
+        });
         binding.editNovoValor.addTextChangedListener(new ConversorDeMoeda(binding.editNovoValor));
         binding.tolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -752,6 +767,7 @@ public class NovaSaida extends AppCompatActivity {
         String dia = binding.addData.getText().toString();
         String mes = binding.addData2.getText().toString();
         String ano = binding.addData3.getText().toString();
+        String dataVencimento = binding.txtDataVencimento.getText().toString();
 
 
         String DadosSaida = binding.editNovaSaida.getText().toString();
@@ -774,9 +790,18 @@ public class NovaSaida extends AppCompatActivity {
         saidas.put("ValorDeSaida", ValorSaidaConvertido);
         saidas.put("dataDeSaida", dataSaida);
         saidas.put("id", id);
-
         saidas.put("formPagamento", formaPagamento);
         saidas.put("categoria", categoria);
+
+        Map<String, Object> contasApagar = new HashMap<>();
+        contasApagar.put("TipoDeSaida", DadosSaida);
+        contasApagar.put("ValorDeSaidaDouble", ValorSaidaDouble);
+        contasApagar.put("ValorDeSaida", ValorSaidaConvertido);
+        contasApagar.put("dataDeSaida", dataSaida);
+        contasApagar.put("dataVencimento", dataVencimento);
+        contasApagar.put("id", id);
+        contasApagar.put("formPagamento", formaPagamento);
+        contasApagar.put("categoria", categoria);
         usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         DocumentReference documentReference = db.collection(usuarioID).document(ano).collection(mes).document("saidas")
@@ -799,7 +824,7 @@ public class NovaSaida extends AppCompatActivity {
         });
 
         if (binding.checksSim.isChecked()){
-            documentReferenceContasApagar.set(saidas).addOnCompleteListener(new OnCompleteListener<Void>() {
+            documentReferenceContasApagar.set(contasApagar).addOnCompleteListener(new OnCompleteListener<Void>() {
                 @Override
                 public void onComplete(@NonNull Task<Void> task) {
 
@@ -821,6 +846,7 @@ public class NovaSaida extends AppCompatActivity {
         binding.addData.setText(dia + "/");
         binding.addData2.setText(mes+ "/");
         binding.addData3.setText(ano);
+        binding.txtDataVencimento.setText(dia+"/"+mes+"/"+ano);
     }
     private void scheduleNotification(String text) {
         Calendar currentTime = Calendar.getInstance();
@@ -906,10 +932,13 @@ public class NovaSaida extends AppCompatActivity {
                 // checkedId é o ID do RadioButton selecionado no RadioGroup
                 switch (checkedId) {
                     case R.id.checksSim:
-
+                        binding.txtDataVencimento.setVisibility(View.VISIBLE);
+                        binding.txtVencimento.setVisibility(View.VISIBLE);
                         break;
                     case R.id.checksNao:
-                        // Lógica para quando o radioButton2 é selecionado
+                        binding.txtDataVencimento.setVisibility(View.GONE);
+                        binding.txtVencimento.setVisibility(View.GONE);
+
 
                         break;
                     // Adicione casos para outros RadioButtons, se necessário
@@ -918,6 +947,40 @@ public class NovaSaida extends AppCompatActivity {
         });
     }
 
+    public void abrirCalendar() {
+        Calendar currentTime = Calendar.getInstance();
+        int year = currentTime.get(Calendar.YEAR);
+        int month = currentTime.get(Calendar.MONTH);
+        int dayOfMonth = currentTime.get(Calendar.DAY_OF_MONTH);
+
+
+        DatePickerDialog datePickerDialog = new DatePickerDialog(this,
+                new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                        // Adicionando 1 ao monthOfYear pois os meses em Calendar começam em 0 (Janeiro é 0)
+                        monthOfYear += 1;
+                        String formattedDate = String.format("%02d/%02d/%04d", dayOfMonth, monthOfYear, year);
+                        binding.txtDataVencimento.setText(formattedDate);
+                    }
+                }, year, month, dayOfMonth);
+
+        // Exibindo a data atual no formato correto no TextView
+        month += 1; // Adicionando 1 ao mês atual
+        String formattedDate = String.format("%02d/%02d/%04d", dayOfMonth, month, year);
+        binding.txtDataVencimento.setText(formattedDate);
+
+        datePickerDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancelar", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+                finish();
+            }
+        });
+
+        // Mostrar o DatePickerDialog
+        datePickerDialog.show();
+    }
 
 
 

@@ -6,6 +6,17 @@ public class ContasAreceber {
     private String ValorDeEntrada;
     private String dataDeEntrada;
     private String formPagamento;
+    private String dataVencimento;
+
+    public String getDataVencimento() {
+        return dataVencimento;
+    }
+
+    public void setDataVencimento(String dataVencimento) {
+        this.dataVencimento = dataVencimento;
+    }
+
+
 
     public String getFormPagamento() {
         return formPagamento;
