@@ -82,22 +82,6 @@ public class PerfilHistoricos extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityPerfilHistoricosBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-       binding.RecyclerView.addOnItemTouchListener(new RecyclerItemClickListener(getApplicationContext(), binding.RecyclerView, new RecyclerItemClickListener.OnItemClickListener() {
-            @Override
-            public void onItemClick(View view, int position) {
-
-            }
-
-            @Override
-            public void onLongItemClick(View view, int position) {
-
-            }
-
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-            }
-        }));
 
         binding.tolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override

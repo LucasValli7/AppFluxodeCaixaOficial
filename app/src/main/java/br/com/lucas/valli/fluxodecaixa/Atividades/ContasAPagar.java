@@ -26,6 +26,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -54,7 +55,6 @@ import br.com.lucas.valli.fluxodecaixa.Classes.AlarmReceber;
 import br.com.lucas.valli.fluxodecaixa.Model.ContasApagar;
 import br.com.lucas.valli.fluxodecaixa.R;
 import br.com.lucas.valli.fluxodecaixa.RecyclerItemClickListener.RecyclerItemClickListener;
-import br.com.lucas.valli.fluxodecaixa.Classes.AlarmPagar;
 import br.com.lucas.valli.fluxodecaixa.databinding.ActivityContasApagarBinding;
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
@@ -97,7 +97,7 @@ public class ContasAPagar extends AppCompatActivity {
 
             @Override
             public void onLongItemClick(View view, int position) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(ContasAPagar.this);
+                /*AlertDialog.Builder builder = new AlertDialog.Builder(ContasAPagar.this);
                 builder.setTitle("Atenção");
                 builder.setMessage("deseja desativar o lembrete?");
                 builder.setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
@@ -159,7 +159,8 @@ public class ContasAPagar extends AppCompatActivity {
 
                     }
                 });
-                builder.show();
+                builder.show();*/
+                customDialogEditar();
             }
 
             @Override
@@ -182,6 +183,50 @@ public class ContasAPagar extends AppCompatActivity {
                 showCustomDialog();
             }
         });
+    }
+
+    private void customDialogEditar(){
+        // Infla o layout personalizado
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_editar_p, null);
+
+
+        // Configura o Spinner de tipo
+        Spinner categorySpinner = dialogView.findViewById(R.id.category_spinner);
+        ArrayAdapter<CharSequence> categoryAdapter = ArrayAdapter.createFromResource(this,
+                R.array.category_array, android.R.layout.simple_spinner_item);
+        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        categorySpinner.setAdapter(categoryAdapter);
+
+
+        // Cria e mostra o AlertDialog
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        builder.setView(dialogView)
+                .setTitle("Editar lançamento")
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+                        if (networkInfo == null){
+                            Log.d("NETCONEX", "SEM INTERNET");
+                            Toast.makeText(ContasAPagar.this, "Verifique sua conexão com a Internet", Toast.LENGTH_SHORT).show();
+
+                        }else {
+
+
+                        }
+
+
+
+                    }
+                })
+                .setNegativeButton("Cancelar", null);
+        binding.progressBar.setVisibility(View.GONE);
+
+        androidx.appcompat.app.AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     @Override

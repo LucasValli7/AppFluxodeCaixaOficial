@@ -1,5 +1,7 @@
 package br.com.lucas.valli.fluxodecaixa.Atividades;
 
+import static br.com.lucas.valli.fluxodecaixa.Classes.ConversorDeMoeda.formatPriceSave;
+
 import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
@@ -17,6 +19,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -51,6 +54,7 @@ import java.util.UUID;
 
 import br.com.lucas.valli.fluxodecaixa.Adapter.AdapterContasAreceber;
 import br.com.lucas.valli.fluxodecaixa.Classes.AlarmReceber;
+import br.com.lucas.valli.fluxodecaixa.Classes.ConversorDeMoeda;
 import br.com.lucas.valli.fluxodecaixa.Model.ContasAreceber;
 import br.com.lucas.valli.fluxodecaixa.R;
 import br.com.lucas.valli.fluxodecaixa.RecyclerItemClickListener.RecyclerItemClickListener;
@@ -81,7 +85,7 @@ public class ContasAReceber extends AppCompatActivity {
             @Override
             public void onLongItemClick(View view, int position) {
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(ContasAReceber.this);
+                /*AlertDialog.Builder builder = new AlertDialog.Builder(ContasAReceber.this);
                 builder.setTitle("Atenção");
                 builder.setMessage("deseja desativar o lembrete?");
                 builder.setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
@@ -134,6 +138,8 @@ public class ContasAReceber extends AppCompatActivity {
                             }
                         });
 
+
+
                     }
                 });
                 builder.setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
@@ -143,8 +149,9 @@ public class ContasAReceber extends AppCompatActivity {
 
                     }
                 });
-                builder.show();
+                builder.show();*/
 
+                customDialogEditar();
 
             }
 
@@ -174,6 +181,41 @@ public class ContasAReceber extends AppCompatActivity {
                 showCustomDialog();
             }
         });
+    }
+
+    private void customDialogEditar(){
+        // Infla o layout personalizado
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_editar_r, null);
+
+        // Cria e mostra o AlertDialog
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        builder.setView(dialogView)
+                .setTitle("Editar lançamento")
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+                        if (networkInfo == null){
+                            Log.d("NETCONEX", "SEM INTERNET");
+                            Toast.makeText(ContasAReceber.this, "Verifique sua conexão com a Internet", Toast.LENGTH_SHORT).show();
+
+                        }else {
+
+
+                        }
+
+
+
+                    }
+                })
+                .setNegativeButton("Cancelar", null);
+        binding.progressBar.setVisibility(View.GONE);
+
+        androidx.appcompat.app.AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     @Override
