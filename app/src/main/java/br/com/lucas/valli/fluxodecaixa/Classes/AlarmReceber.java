@@ -1,4 +1,4 @@
-package br.com.lucas.valli.fluxodecaixa;
+package br.com.lucas.valli.fluxodecaixa.Classes;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -9,6 +9,9 @@ import android.content.Intent;
 import android.os.Build;
 
 import androidx.core.app.NotificationCompat;
+
+import br.com.lucas.valli.fluxodecaixa.Atividades.ContasAReceber;
+import br.com.lucas.valli.fluxodecaixa.R;
 
 public class AlarmReceber extends BroadcastReceiver {
     private static final String CHANNEL_ID = "canal_de_notificacoes_r";

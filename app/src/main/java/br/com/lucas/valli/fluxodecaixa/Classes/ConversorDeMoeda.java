@@ -1,4 +1,4 @@
-package br.com.lucas.valli.fluxodecaixa.Model;
+package br.com.lucas.valli.fluxodecaixa.Classes;
 
 import android.text.Editable;
 import android.text.TextWatcher;

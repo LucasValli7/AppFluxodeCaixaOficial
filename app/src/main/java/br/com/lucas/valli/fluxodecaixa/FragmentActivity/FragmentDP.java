@@ -3,7 +3,6 @@ package br.com.lucas.valli.fluxodecaixa.FragmentActivity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Canvas;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -31,9 +30,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
@@ -46,7 +43,6 @@ import java.util.Locale;
 
 import br.com.lucas.valli.fluxodecaixa.Adapter.AdapterDadosSaidaD;
 import br.com.lucas.valli.fluxodecaixa.Model.DadosSaidaD;
-import br.com.lucas.valli.fluxodecaixa.NovaSaida;
 import br.com.lucas.valli.fluxodecaixa.R;
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 

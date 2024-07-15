@@ -1,4 +1,4 @@
-package br.com.lucas.valli.fluxodecaixa;
+package br.com.lucas.valli.fluxodecaixa.Atividades;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
@@ -8,9 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -43,6 +41,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import br.com.lucas.valli.fluxodecaixa.R;
 import br.com.lucas.valli.fluxodecaixa.databinding.ActivityFormCadastroBinding;
 
 public class Form_Cadastro extends AppCompatActivity {

@@ -11,7 +11,7 @@
       android:layout_height="match_parent"
       android:background="@color/white"
       android:orientation="vertical"
-      tools:context=".Form_Login">
+      tools:context=".Atividades.Form_Login">
 
     <ImageView
         android:id="@+id/logoApp"

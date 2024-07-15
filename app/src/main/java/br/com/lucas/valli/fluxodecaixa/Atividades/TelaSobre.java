@@ -1,4 +1,4 @@
-package br.com.lucas.valli.fluxodecaixa;
+package br.com.lucas.valli.fluxodecaixa.Atividades;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;

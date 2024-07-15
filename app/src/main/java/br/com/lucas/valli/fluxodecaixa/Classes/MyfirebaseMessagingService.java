@@ -1,4 +1,4 @@
-package br.com.lucas.valli.fluxodecaixa;
+package br.com.lucas.valli.fluxodecaixa.Classes;
 
 import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
@@ -17,6 +17,14 @@ import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.Objects;
+
+import br.com.lucas.valli.fluxodecaixa.Atividades.ContasAPagar;
+import br.com.lucas.valli.fluxodecaixa.Atividades.PerfilHistoricos;
+import br.com.lucas.valli.fluxodecaixa.R;
+import br.com.lucas.valli.fluxodecaixa.Atividades.TelaPrincipal;
+import br.com.lucas.valli.fluxodecaixa.Atividades.TelaPrincipalEntradas;
+import br.com.lucas.valli.fluxodecaixa.Atividades.TelaPrincipalSaidas;
+import br.com.lucas.valli.fluxodecaixa.Atividades.TelaSobre;
 
 @SuppressLint("MissingFirebaseInstanceTokenRefresh")
 public class MyfirebaseMessagingService extends FirebaseMessagingService {

@@ -1,6 +1,6 @@
-package br.com.lucas.valli.fluxodecaixa;
+package br.com.lucas.valli.fluxodecaixa.Atividades;
 
-import static br.com.lucas.valli.fluxodecaixa.Model.ConversorDeMoeda.formatPriceSave;
+import static br.com.lucas.valli.fluxodecaixa.Classes.ConversorDeMoeda.formatPriceSave;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,8 +20,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -51,7 +49,6 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.NumberFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -60,7 +57,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
-import br.com.lucas.valli.fluxodecaixa.Model.ConversorDeMoeda;
+import br.com.lucas.valli.fluxodecaixa.Classes.ConversorDeMoeda;
+import br.com.lucas.valli.fluxodecaixa.Classes.AlarmPagar;
+import br.com.lucas.valli.fluxodecaixa.R;
 import br.com.lucas.valli.fluxodecaixa.databinding.ActivityNovaSaidaBinding;
 
 public class NovaSaida extends AppCompatActivity {
@@ -946,7 +945,6 @@ public class NovaSaida extends AppCompatActivity {
             }
         });
     }
-
     public void abrirCalendar() {
         Calendar currentTime = Calendar.getInstance();
         int year = currentTime.get(Calendar.YEAR);

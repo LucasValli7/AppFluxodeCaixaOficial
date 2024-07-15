@@ -16,8 +16,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import br.com.lucas.valli.fluxodecaixa.ContasAPagar;
-import br.com.lucas.valli.fluxodecaixa.Model.ContasApagar;
+import br.com.lucas.valli.fluxodecaixa.Atividades.ContasAPagar;
 import br.com.lucas.valli.fluxodecaixa.Model.ContasAreceber;
 import br.com.lucas.valli.fluxodecaixa.R;
 

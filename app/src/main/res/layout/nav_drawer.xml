@@ -185,29 +185,6 @@
 
     </LinearLayout>
     <LinearLayout
-        android:id="@+id/linearHorasExtras"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="12dp"
-        android:orientation="horizontal">
-
-        <ImageView
-            android:layout_width="30sp"
-            android:layout_height="30dp"
-            android:layout_gravity="center"
-            android:src="@drawable/ic_relogio_bc_hr"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/black"
-            android:textSize="20sp"
-            android:padding="8dp"
-            android:text="Horas Extras" />
-
-    </LinearLayout>
-    <LinearLayout
         android:id="@+id/linear_ListaDeCompras"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@color/white"
     android:orientation="vertical"
-    tools:context=".NovaEntrada">
+    tools:context=".Atividades.NovaEntrada">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/tolbar"
@@ -210,131 +210,19 @@
         app:layout_constraintTop_toBottomOf="@+id/textInputLayout1" />
 
     <TextView
-        android:id="@+id/txt_ContasAPagar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="CONTAS A RECEBER"
-        android:textSize="25sp"
-        android:textStyle="bold"
-        android:textColor="@color/blacl_ligth"
-        android:layout_margin="10dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/LinhaDivisoria3" />
-
-    <RadioGroup
-        android:id="@+id/radioGroup1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/txt_ContasAPagar">
-
-        <TextView
-            android:id="@+id/txt_contasApagar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="GERAR CONTAS A RECEBER? "
-            android:textSize="15sp"
-            tools:ignore="TouchTargetSizeCheck" />
-
-        <RadioButton
-            android:id="@+id/checksSim"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="SIM"
-            android:textStyle="bold"
-            android:layout_marginStart="15dp"
-            android:layout_marginEnd="15dp"
-            app:layout_constraintTop_toBottomOf="@id/txt_ContasAPagar"
-            app:layout_constraintStart_toStartOf="parent"/>
-
-        <RadioButton
-            android:id="@+id/checksNao"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="15dp"
-            android:text="NÃO"
-            android:textColor="@color/black"
-            android:textStyle="bold"
-            app:layout_constraintStart_toEndOf="@id/checksSim"
-            app:layout_constraintTop_toBottomOf="@id/textInputLayout2" />
-
-    </RadioGroup>
-
-    <TextView
-        android:id="@+id/txt_vencimento"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_marginStart="20dp"
-        android:gravity="center"
-        android:hint="Data de vencimento"
-        android:maxLines="1"
-        android:textSize="20sp"
-        android:visibility="gone"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/radioGroup1"
-        android:textStyle="bold" />
-    <TextView
-        android:id="@+id/txt_DataVencimento"
+        android:id="@+id/id_motimentacao"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="30dp"
         android:gravity="center"
-        android:hint="10/05/2024"
+        android:hint=""
         android:maxLines="1"
         android:textSize="20sp"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/radioGroup1"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:textStyle="bold" />
-
-    <LinearLayout
-        android:id="@+id/date"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:gravity="center"
-        android:visibility="gone"
-        android:orientation="horizontal"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/radioGroup1">
-
-
-        <TextView
-            android:id="@+id/dataContasApagar"
-            android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:layout_marginStart="16dp"
-            android:drawableLeft="@drawable/ic_calendar"
-            android:drawablePadding="10dp"
-            android:gravity="center"
-            android:hint="00/00/0000"
-            android:maxLines="1"
-            android:textSize="30sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/horaContasApagar"
-            android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:layout_marginStart="16dp"
-            android:drawableLeft="@drawable/ic_relogio"
-            android:drawablePadding="10dp"
-            android:gravity="center"
-            android:hint="0:00"
-            android:maxLines="1"
-            android:textSize="30sp"
-            android:textStyle="bold" />
-
-
-    </LinearLayout>
-
-
+        android:textStyle="italic" />
 
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton

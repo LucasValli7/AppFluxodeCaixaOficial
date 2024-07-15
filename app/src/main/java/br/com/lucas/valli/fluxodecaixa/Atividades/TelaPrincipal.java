@@ -1,38 +1,23 @@
-package br.com.lucas.valli.fluxodecaixa;
+package br.com.lucas.valli.fluxodecaixa.Atividades;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
-import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.viewpager.widget.ViewPager;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
 
 import android.app.Activity;
-import android.app.AlarmManager;
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -52,19 +37,15 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
 import br.com.lucas.valli.fluxodecaixa.Adapter.ViewPagerAdapter;
 import br.com.lucas.valli.fluxodecaixa.FragmentActivity.FragmentContasAPagar;
@@ -72,6 +53,7 @@ import br.com.lucas.valli.fluxodecaixa.FragmentActivity.FragmentContasAReceber;
 import br.com.lucas.valli.fluxodecaixa.FragmentActivity.FragmentResumeAnual;
 import br.com.lucas.valli.fluxodecaixa.FragmentActivity.FragmentResumeDiario;
 import br.com.lucas.valli.fluxodecaixa.FragmentActivity.FragmentResumeMensal;
+import br.com.lucas.valli.fluxodecaixa.R;
 import br.com.lucas.valli.fluxodecaixa.databinding.ActivityTelaPrincipalBinding;
 
 public class TelaPrincipal extends AppCompatActivity {
@@ -311,7 +293,6 @@ public class TelaPrincipal extends AppCompatActivity {
         linearSaida = findViewById(R.id.LinearSaida);
         linearContasApagar = findViewById(R.id.LinearContasApagar);
         linearContasAreceber = findViewById(R.id.LinearContasAreceber);
-        linearHorasExtras = findViewById(R.id.linearHorasExtras);
         linearListaDeCompras = findViewById(R.id.linear_ListaDeCompras);
         linearHistorico = findViewById(R.id.LinearHistorico);
         linearSobre = findViewById(R.id.LinearSobre);
@@ -367,19 +348,7 @@ public class TelaPrincipal extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-        linearHorasExtras.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Snackbar snackbar = Snackbar.make(v, "Estará disponível na próxima atualização", Snackbar.LENGTH_INDEFINITE)
-                        .setAction("OK", new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
 
-                            }
-                        });
-                snackbar.show();
-            }
-        });
 
         linearListaDeCompras.setOnClickListener(new View.OnClickListener() {
             @Override

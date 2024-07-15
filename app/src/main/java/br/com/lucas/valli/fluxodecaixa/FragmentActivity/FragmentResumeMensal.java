@@ -1,9 +1,5 @@
 package br.com.lucas.valli.fluxodecaixa.FragmentActivity;
 
-import static br.com.lucas.valli.fluxodecaixa.R.color.green;
-import static br.com.lucas.valli.fluxodecaixa.R.color.red;
-
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -24,23 +20,18 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.FirebaseNetworkException;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.type.Color;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import br.com.lucas.valli.fluxodecaixa.R;
-import br.com.lucas.valli.fluxodecaixa.TelaPrincipal;
-import br.com.lucas.valli.fluxodecaixa.TelaPrincipalEntradas;
-import br.com.lucas.valli.fluxodecaixa.TelaPrincipalSaidas;
+import br.com.lucas.valli.fluxodecaixa.Atividades.TelaPrincipalEntradas;
+import br.com.lucas.valli.fluxodecaixa.Atividades.TelaPrincipalSaidas;
 
 public class FragmentResumeMensal extends Fragment {
 

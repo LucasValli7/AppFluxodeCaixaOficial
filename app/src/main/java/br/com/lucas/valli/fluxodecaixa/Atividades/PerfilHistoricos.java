@@ -1,11 +1,8 @@
-package br.com.lucas.valli.fluxodecaixa;
+package br.com.lucas.valli.fluxodecaixa.Atividades;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager.widget.ViewPager;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -33,13 +30,10 @@ import com.google.android.gms.ads.interstitial.InterstitialAd;
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
@@ -52,9 +46,10 @@ import java.util.Locale;
 
 import br.com.lucas.valli.fluxodecaixa.Adapter.AdapterHistoricoEntrada;
 import br.com.lucas.valli.fluxodecaixa.Adapter.AdapterHistoricoSaida;
-import br.com.lucas.valli.fluxodecaixa.Adapter.ViewPagerAdapter;
 import br.com.lucas.valli.fluxodecaixa.Model.HistoricoEntrada;
 import br.com.lucas.valli.fluxodecaixa.Model.HistoricoSaida;
+import br.com.lucas.valli.fluxodecaixa.R;
+import br.com.lucas.valli.fluxodecaixa.RecyclerItemClickListener.RecyclerItemClickListener;
 import br.com.lucas.valli.fluxodecaixa.databinding.ActivityPerfilHistoricosBinding;
 
 public class PerfilHistoricos extends AppCompatActivity {
@@ -87,7 +82,22 @@ public class PerfilHistoricos extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityPerfilHistoricosBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+       binding.RecyclerView.addOnItemTouchListener(new RecyclerItemClickListener(getApplicationContext(), binding.RecyclerView, new RecyclerItemClickListener.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
 
+            }
+
+            @Override
+            public void onLongItemClick(View view, int position) {
+
+            }
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            }
+        }));
 
         binding.tolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -109,6 +119,7 @@ public class PerfilHistoricos extends AppCompatActivity {
         });
 
 
+
     }
 
     @Override
@@ -119,6 +130,7 @@ public class PerfilHistoricos extends AppCompatActivity {
         startActivity(intent);
         finish();
     }
+
 
     public boolean checkConnection(){
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -388,10 +400,13 @@ public class PerfilHistoricos extends AppCompatActivity {
     public void RecuperarDadosIniciar(){
         binding.progressBar.setVisibility(View.VISIBLE);
 
+
         historicoEntradaList = new ArrayList<>();
         adapterHistoricoEntrada = new AdapterHistoricoEntrada(getApplicationContext(), historicoEntradaList);
         binding.RecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
         binding.RecyclerView.setAdapter(adapterHistoricoEntrada);
+
+
 
         usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
         db = FirebaseFirestore.getInstance();

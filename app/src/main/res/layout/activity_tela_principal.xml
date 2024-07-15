@@ -8,7 +8,7 @@
     android:orientation="vertical"
     android:id="@+id/drawerLayout"
     android:background="@color/black"
-    tools:context=".TelaPrincipal">
+    tools:context=".Atividades.TelaPrincipal">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"

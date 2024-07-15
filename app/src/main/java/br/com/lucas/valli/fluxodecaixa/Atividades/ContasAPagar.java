@@ -1,6 +1,4 @@
-package br.com.lucas.valli.fluxodecaixa;
-
-import static br.com.lucas.valli.fluxodecaixa.Model.ConversorDeMoeda.formatPriceSave;
+package br.com.lucas.valli.fluxodecaixa.Atividades;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -9,11 +7,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
-import androidx.work.WorkRequest;
 
-import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
@@ -23,8 +17,8 @@ import android.content.Intent;
 import android.graphics.Canvas;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
-import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,13 +26,11 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -56,14 +48,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import br.com.lucas.valli.fluxodecaixa.Adapter.AdapterContasApagar;
-import br.com.lucas.valli.fluxodecaixa.Adapter.AdapterHistoricoEntrada;
-import br.com.lucas.valli.fluxodecaixa.Adapter.AdapterHistoricoSaida;
+import br.com.lucas.valli.fluxodecaixa.Classes.AlarmReceber;
 import br.com.lucas.valli.fluxodecaixa.Model.ContasApagar;
-import br.com.lucas.valli.fluxodecaixa.Model.HistoricoEntrada;
-import br.com.lucas.valli.fluxodecaixa.Model.HistoricoSaida;
+import br.com.lucas.valli.fluxodecaixa.R;
+import br.com.lucas.valli.fluxodecaixa.RecyclerItemClickListener.RecyclerItemClickListener;
+import br.com.lucas.valli.fluxodecaixa.Classes.AlarmPagar;
 import br.com.lucas.valli.fluxodecaixa.databinding.ActivityContasApagarBinding;
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
@@ -91,14 +82,97 @@ public class ContasAPagar extends AppCompatActivity {
         binding = ActivityContasApagarBinding.inflate(getLayoutInflater());
         super.onCreate(savedInstanceState);
         setContentView(binding.getRoot());
+        binding.btnAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ContasAPagar.this, NovasContasApagar.class);
+                startActivity(intent);
+            }
+        });
+        binding.listaContasAPagar.addOnItemTouchListener(new RecyclerItemClickListener(getApplicationContext(), binding.listaContasAPagar, new RecyclerItemClickListener.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
 
+            }
+
+            @Override
+            public void onLongItemClick(View view, int position) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(ContasAPagar.this);
+                builder.setTitle("Atenção");
+                builder.setMessage("deseja desativar o lembrete?");
+                builder.setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        binding.progressBar.setVisibility(View.VISIBLE);
+                        Date x = new Date();
+                        String mes = new SimpleDateFormat("MM", new Locale("pt", "BR")).format(x);
+                        String ano = new SimpleDateFormat("yyyy", new Locale("pt", "BR")).format(x);
+                        ContasApagar item = contasApagar.get(position);
+
+                        DocumentReference documentReference = db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("ContasApagar")
+                                .document(item.getId());
+
+                        documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                DocumentSnapshot documentSnapshot = task.getResult();
+                                if (documentSnapshot.contains("TipoDeSaida") && documentSnapshot.contains("ValorDeSaida")
+                                        && documentSnapshot.contains("dataDeSaida")){
+
+                                    String idMovimentacao = documentSnapshot.getString("idMovimentacao");
+                                    int requestCode = Integer.parseInt(idMovimentacao); // O mesmo requestCode usado ao configurar o alarme
+                                    Intent intent = new Intent(getApplicationContext(), AlarmPagar.class);
+                                    intent.putExtra("notification_text", "Seu texto de notificação aqui"); // Deve corresponder ao Intent usado originalmente
+
+                                    int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                        flags |= PendingIntent.FLAG_IMMUTABLE;
+                                    }
+
+                                    PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), requestCode, intent, flags);
+
+                                    AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                                    if (alarmManager != null) {
+                                        alarmManager.cancel(pendingIntent);
+                                        Toast.makeText(ContasAPagar.this, "Alarme desativado com sucesso", Toast.LENGTH_SHORT).show();
+                                        binding.progressBar.setVisibility(View.GONE);
+
+                                    } else {
+                                        Toast.makeText(ContasAPagar.this, "Falha ao desativar o alarme", Toast.LENGTH_SHORT).show();
+                                    }
+
+
+
+
+
+
+                                }
+                            }
+                        });
+
+                    }
+                });
+                builder.setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+
+                    }
+                });
+                builder.show();
+            }
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            }
+        }));
         binding.tolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 finish();
             }
         });
-
 
     }
     public void BtnPesquisar(){
@@ -164,8 +238,6 @@ public class ContasAPagar extends AppCompatActivity {
         });
     }
     public void RecuperarDadosContasAPagarI(){
-
-
         contasApagar = new ArrayList<>();
         adapterContasApagar = new AdapterContasApagar(getApplicationContext(), contasApagar);
         binding.listaContasAPagar.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
@@ -295,26 +367,30 @@ public class ContasAPagar extends AppCompatActivity {
                                                             String valorSaida = documentSnapshot.getString("ValorDeSaida");
                                                             String valorSaidaDouble = documentSnapshot.getString("ValorDeSaidaDouble");
                                                             String dataSaida = documentSnapshot.getString("dataDeSaida");
+                                                            String formaPagamento = documentSnapshot.getString("formPagamento");
+                                                            String categoria = documentSnapshot.getString("categoria");
                                                             Double ValorCv = Double.parseDouble(valorSaidaDouble);
-                                                            Log.d("PAGAMENTOOK", tipoSaida +"\n" + valorSaida + "\n" + dataSaida + "\n" + valorSaidaDouble);
+                                                            Log.d("PAGAMENTOOK", tipoSaida +"\n" + valorSaida + "\n" +valorSaidaDouble +
+                                                                    "\n" + dataSaida +"\n"+formaPagamento+"\n"+categoria);
 
                                                             String id = UUID.randomUUID().toString();
                                                             FirebaseFirestore db = FirebaseFirestore.getInstance();
-                                                            Map<String, Object> contasPagas = new HashMap<>();
-                                                            contasPagas.put("dataDeSaida", dataSaida);
-                                                            contasPagas.put("ValorDeSaidaDouble", valorSaidaDouble);
-                                                            contasPagas.put("ValorDeSaida", valorSaida);
-                                                            contasPagas.put("TipoDeSaida", tipoSaida);
-                                                            contasPagas.put("id", id);
+                                                            Map<String, Object> contasApagar = new HashMap<>();
+                                                            contasApagar.put("TipoDeSaida", tipoSaida);
+                                                            contasApagar.put("ValorDeSaidaDouble", valorSaidaDouble);
+                                                            contasApagar.put("ValorDeSaida", valorSaida);
+                                                            contasApagar.put("dataDeSaida", dataSaida);
+                                                            contasApagar.put("id", id);
+                                                            contasApagar.put("formPagamento", formaPagamento);
+                                                            contasApagar.put("categoria", categoria);
                                                             usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
 
-                                                            DocumentReference documentReferenceContasApagar = db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                                                                    .collection("ContasPagas").document(id);
+                                                            DocumentReference documentReferenceContasApagar = db.collection(usuarioID).document(ano).collection(mes)
+                                                                    .document("saidas")
+                                                                    .collection("nova saida").document("categoria").collection(categoria).document(id);
 
-
-
-                                                            documentReferenceContasApagar.set(contasPagas).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                            documentReferenceContasApagar.set(contasApagar).addOnCompleteListener(new OnCompleteListener<Void>() {
                                                                 @Override
                                                                 public void onComplete(@NonNull Task<Void> task) {
 
@@ -326,30 +402,71 @@ public class ContasAPagar extends AppCompatActivity {
                                                                 }
                                                             });
 
-                                                            //document reference total Contas Pagas
-                                                            DocumentReference documentReferenceContasPagas = db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                                                                    .collection("Total Contas Pagas").document("Total");
-
-                                                            documentReferenceContasPagas.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                            //document reference ResumoDiario
+                                                            DocumentReference documentReferenceTotalDiario = db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalSaidasDiario")
+                                                                    .document(dia);
+                                                            documentReferenceTotalDiario.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                                                                 @Override
-                                                                public void onComplete(@NonNull Task<DocumentSnapshot> taskC) {
-                                                                    DocumentSnapshot documentSnapshotC = taskC.getResult();
+                                                                public void onComplete(@NonNull Task<DocumentSnapshot> taskDiario) {
+                                                                    DocumentSnapshot documentSnapshotTotalDiario = taskDiario.getResult();
 
-
-                                                                    if (documentSnapshotC.contains("ResultadoDaSomaContasPagas")){
-                                                                        Double ValorC = Double.parseDouble(documentSnapshotC.getString("ResultadoDaSomaContasPagas"));
-
-                                                                        Double SomaSaida = ValorC + ValorCv;
+                                                                    if (documentSnapshotTotalDiario.contains("ResultadoDaSomaSaidaDiario")){
+                                                                        Double ValorDiario = Double.parseDouble(documentSnapshotTotalDiario.getString("ResultadoDaSomaSaidaDiario"));
+                                                                        Double SomaSaida = ValorDiario + ValorCv;
                                                                         String SomaSaidaCv = String.valueOf(SomaSaida);
 
-                                                                        // HasMap total D
-                                                                        Map<String, Object> valorTotalC = new HashMap<>();
-                                                                        valorTotalC.put("ResultadoDaSomaContasPagas", SomaSaidaCv);
+                                                                        Map<String, Object> valorTotalDiairo = new HashMap<>();
+                                                                        valorTotalDiairo.put("ResultadoDaSomaSaidaDiario", SomaSaidaCv);
 
-                                                                        db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                                                                                .collection("Total Contas Pagas").document("Total").set(valorTotalC).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                        db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalSaidasDiario")
+                                                                                .document(dia).set(valorTotalDiairo).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                                    @Override
+                                                                                    public void onSuccess(Void unused) {
+
+                                                                                    }
+                                                                                });
+
+                                                                    }else {
+                                                                        String ValorStringCv = String.valueOf(ValorCv);
+                                                                        Map<String, Object> valorTotalDiairo = new HashMap<>();
+                                                                        valorTotalDiairo.put("ResultadoDaSomaSaidaDiario", ValorStringCv);
+
+                                                                        db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalSaidasDiario")
+                                                                                .document(dia).set(valorTotalDiairo).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                                    @Override
+                                                                                    public void onSuccess(Void unused) {
+
+                                                                                    }
+                                                                                });
+
+                                                                    }
+                                                                }
+                                                            });
+
+                                                            //document reference ResumoMensal
+                                                            DocumentReference documentReferenceMensal = db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de Saidas")
+                                                                    .document("Total");
+
+                                                            documentReferenceMensal.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                @Override
+                                                                public void onComplete(@NonNull Task<DocumentSnapshot> taskGeral) {
+                                                                    DocumentSnapshot documentSnapshotMensal = taskGeral.getResult();
+
+                                                                    if (documentSnapshotMensal.contains("ResultadoDaSomaSaida")){
+                                                                        Double ValorDiario = Double.parseDouble(documentSnapshotMensal.getString("ResultadoDaSomaSaida"));
+                                                                        Double SomaSaida = ValorDiario + ValorCv;
+                                                                        String SomaSaidaCv = String.valueOf(SomaSaida);
+
+                                                                        //HasMap total
+                                                                        Map<String, Object> valorTotalMensal = new HashMap<>();
+                                                                        valorTotalMensal.put("ResultadoDaSomaSaida", SomaSaidaCv);
+
+                                                                        // recuperar total(geral)
+                                                                        db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de Saidas")
+                                                                                .document("Total").set(valorTotalMensal).addOnCompleteListener(new OnCompleteListener<Void>() {
                                                                                     @Override
                                                                                     public void onComplete(@NonNull Task<Void> task) {
+
 
                                                                                     }
                                                                                 }).addOnFailureListener(new OnFailureListener() {
@@ -359,15 +476,17 @@ public class ContasAPagar extends AppCompatActivity {
                                                                                     }
                                                                                 });
                                                                     }else {
-                                                                        String ValorCvString = String.valueOf(ValorCv);
-                                                                        // HasMap total C
-                                                                        Map<String, Object> valorTotalC = new HashMap<>();
-                                                                        valorTotalC.put("ResultadoDaSomaContasPagas", ValorCvString);
+                                                                        String ValorStringCv = String.valueOf(ValorCv);
+                                                                        //HasMap total
+                                                                        Map<String, Object> valorTotalMensal = new HashMap<>();
+                                                                        valorTotalMensal.put("ResultadoDaSomaSaida", ValorStringCv);
 
-                                                                        db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                                                                                .collection("Total Contas Pagas").document("Total").set(valorTotalC).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                        // recuperar total(geral)
+                                                                        db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de Saidas")
+                                                                                .document("Total").set(valorTotalMensal).addOnCompleteListener(new OnCompleteListener<Void>() {
                                                                                     @Override
                                                                                     public void onComplete(@NonNull Task<Void> task) {
+
 
                                                                                     }
                                                                                 }).addOnFailureListener(new OnFailureListener() {
@@ -377,9 +496,217 @@ public class ContasAPagar extends AppCompatActivity {
                                                                                     }
                                                                                 });
                                                                     }
-
                                                                 }
                                                             });
+
+                                                            //document reference ResumoAnual
+                                                            DocumentReference documentReferenceAnual = db.collection(usuarioID).document(ano).collection("ResumoAnual").document("saidas").collection("TotalSaidaAnual")
+                                                                    .document("Total");
+
+                                                            documentReferenceAnual.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                @Override
+                                                                public void onComplete(@NonNull Task<DocumentSnapshot> taskAnual) {
+                                                                    DocumentSnapshot documentSnapshotAnual = taskAnual.getResult();
+
+                                                                    if (documentSnapshotAnual.contains("ResultadoTotalSaidaAnual")){
+                                                                        Double ValorDiario = Double.parseDouble(documentSnapshotAnual.getString("ResultadoTotalSaidaAnual"));
+                                                                        Double SomaSaida = ValorDiario + ValorCv;
+                                                                        String SomaSaidaCv = String.valueOf(SomaSaida);
+
+                                                                        //HasMap total
+                                                                        Map<String, Object> valorTotalAnual = new HashMap<>();
+                                                                        valorTotalAnual.put("ResultadoTotalSaidaAnual", SomaSaidaCv);
+
+                                                                        db.collection(usuarioID).document(ano).collection("ResumoAnual").document("saidas").collection("TotalSaidaAnual")
+                                                                                .document("Total").set(valorTotalAnual).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                                    @Override
+                                                                                    public void onSuccess(Void unused) {
+
+                                                                                    }
+                                                                                });
+
+                                                                    }else {
+                                                                        String ValorStringCv = String.valueOf(ValorCv);
+                                                                        //HasMap total
+                                                                        Map<String, Object> valorTotalAnual = new HashMap<>();
+                                                                        valorTotalAnual.put("ResultadoTotalSaidaAnual", ValorStringCv);
+
+                                                                        db.collection(usuarioID).document(ano).collection("ResumoAnual").document("saidas").collection("TotalSaidaAnual")
+                                                                                .document("Total").set(valorTotalAnual).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                                    @Override
+                                                                                    public void onSuccess(Void unused) {
+
+                                                                                    }
+                                                                                });
+
+                                                                    }
+                                                                }
+                                                            });
+
+
+
+
+                                                            if (categoria.equals("Gastos Essenciais")){
+                                                                //document reference total Essenciais
+                                                                DocumentReference documentReferenceE = db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de SaidasE")
+                                                                        .document("Total");
+
+                                                                documentReferenceE.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                    @Override
+                                                                    public void onComplete(@NonNull Task<DocumentSnapshot> taskE) {
+                                                                        DocumentSnapshot documentSnapshotE = taskE.getResult();
+
+                                                                        if (documentSnapshotE.contains("ResultadoDaSomaSaidaE")){
+                                                                            Double ValorDiario = Double.parseDouble(documentSnapshotE.getString("ResultadoDaSomaSaidaE"));
+                                                                            Double SomaSaida = ValorDiario + ValorCv;
+                                                                            String SomaSaidaCv = String.valueOf(SomaSaida);
+
+                                                                            // HasMap total E
+                                                                            Map<String, Object> valorTotalE = new HashMap<>();
+                                                                            valorTotalE.put("ResultadoDaSomaSaidaE", SomaSaidaCv);
+
+                                                                            db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de SaidasE")
+                                                                                    .document("Total").set(valorTotalE).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                                        @Override
+                                                                                        public void onComplete(@NonNull Task<Void> task) {
+
+                                                                                        }
+                                                                                    }).addOnFailureListener(new OnFailureListener() {
+                                                                                        @Override
+                                                                                        public void onFailure(@NonNull Exception e) {
+
+                                                                                        }
+                                                                                    });
+                                                                        }else {
+                                                                            String ValorCvString = String.valueOf(ValorCv);
+                                                                            // HasMap total E
+                                                                            Map<String, Object> valorTotalE = new HashMap<>();
+                                                                            valorTotalE.put("ResultadoDaSomaSaidaE", ValorCvString);
+
+                                                                            db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de SaidasE")
+                                                                                    .document("Total").set(valorTotalE).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                                        @Override
+                                                                                        public void onComplete(@NonNull Task<Void> task) {
+
+                                                                                        }
+                                                                                    }).addOnFailureListener(new OnFailureListener() {
+                                                                                        @Override
+                                                                                        public void onFailure(@NonNull Exception e) {
+
+                                                                                        }
+                                                                                    });
+                                                                        }
+
+                                                                    }
+                                                                });
+                                                            } else if (categoria.equals("Pagamento de Dívidas")) {
+                                                                //document reference total Pagamento de Dívidas
+                                                                DocumentReference documentReferenceP = db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de SaidasP")
+                                                                        .document("Total");
+
+                                                                documentReferenceP.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                    @Override
+                                                                    public void onComplete(@NonNull Task<DocumentSnapshot> taskP) {
+                                                                        DocumentSnapshot documentSnapshotP = taskP.getResult();
+
+                                                                        if (documentSnapshotP.contains("ResultadoDaSomaSaidaP")){
+                                                                            Double ValorP= Double.parseDouble(documentSnapshotP.getString("ResultadoDaSomaSaidaP"));
+                                                                            Double SomaSaida = ValorP + ValorCv;
+                                                                            String SomaSaidaCv = String.valueOf(SomaSaida);
+
+                                                                            // HasMap total P
+                                                                            Map<String, Object> valorTotalP = new HashMap<>();
+                                                                            valorTotalP.put("ResultadoDaSomaSaidaP", SomaSaidaCv);
+
+                                                                            db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de SaidasP")
+                                                                                    .document("Total").set(valorTotalP).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                                        @Override
+                                                                                        public void onComplete(@NonNull Task<Void> task) {
+
+                                                                                        }
+                                                                                    }).addOnFailureListener(new OnFailureListener() {
+                                                                                        @Override
+                                                                                        public void onFailure(@NonNull Exception e) {
+
+                                                                                        }
+                                                                                    });
+                                                                        }else {
+                                                                            String ValorCvString = String.valueOf(ValorCv);
+                                                                            // HasMap total E
+                                                                            Map<String, Object> valorTotalP = new HashMap<>();
+                                                                            valorTotalP.put("ResultadoDaSomaSaidaP", ValorCvString);
+
+                                                                            db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de SaidasP")
+                                                                                    .document("Total").set(valorTotalP).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                                        @Override
+                                                                                        public void onComplete(@NonNull Task<Void> task) {
+
+                                                                                        }
+                                                                                    }).addOnFailureListener(new OnFailureListener() {
+                                                                                        @Override
+                                                                                        public void onFailure(@NonNull Exception e) {
+
+                                                                                        }
+                                                                                    });
+                                                                        }
+
+                                                                    }
+                                                                });
+
+                                                            } else if (categoria.equals("Desejos Pessoais")) {
+                                                                //document reference total Desejos Pessoais
+                                                                DocumentReference documentReferenceD = db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de SaidasD")
+                                                                        .document("Total");
+
+                                                                documentReferenceD.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                    @Override
+                                                                    public void onComplete(@NonNull Task<DocumentSnapshot> taskD) {
+                                                                        DocumentSnapshot documentSnapshotD = taskD.getResult();
+
+                                                                        if (documentSnapshotD.contains("ResultadoDaSomaSaidaD")){
+                                                                            Double ValorD= Double.parseDouble(documentSnapshotD.getString("ResultadoDaSomaSaidaD"));
+                                                                            Double SomaSaida = ValorD + ValorCv;
+                                                                            String SomaSaidaCv = String.valueOf(SomaSaida);
+
+                                                                            // HasMap total D
+                                                                            Map<String, Object> valorTotalD = new HashMap<>();
+                                                                            valorTotalD.put("ResultadoDaSomaSaidaD", SomaSaidaCv);
+
+                                                                            db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de SaidasD")
+                                                                                    .document("Total").set(valorTotalD).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                                        @Override
+                                                                                        public void onComplete(@NonNull Task<Void> task) {
+
+                                                                                        }
+                                                                                    }).addOnFailureListener(new OnFailureListener() {
+                                                                                        @Override
+                                                                                        public void onFailure(@NonNull Exception e) {
+
+                                                                                        }
+                                                                                    });
+                                                                        }else {
+                                                                            String ValorCvString = String.valueOf(ValorCv);
+                                                                            // HasMap total D
+                                                                            Map<String, Object> valorTotalD = new HashMap<>();
+                                                                            valorTotalD.put("ResultadoDaSomaSaidaD", ValorCvString);
+
+                                                                            db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de SaidasD")
+                                                                                    .document("Total").set(valorTotalD).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                                        @Override
+                                                                                        public void onComplete(@NonNull Task<Void> task) {
+
+                                                                                        }
+                                                                                    }).addOnFailureListener(new OnFailureListener() {
+                                                                                        @Override
+                                                                                        public void onFailure(@NonNull Exception e) {
+
+                                                                                        }
+                                                                                    });
+                                                                        }
+
+                                                                    }
+                                                                });
+                                                            }
 
                                                             DocumentReference documentReferenceCTotal = db.collection(usuarioID).document(ano).collection(mes).document("saidas")
                                                                     .collection("Total Contas A Pagar").document("Total");
@@ -397,6 +724,11 @@ public class ContasAPagar extends AppCompatActivity {
                                                                                 Double totalContasAPagar = Double.parseDouble(documentSnapshotCTotal.getString("ResultadoDaSomaSaidaC"));
                                                                                 Double valorDoubleC = Double.parseDouble(documentSnapshotC.getString("ValorDeSaidaDouble"));
                                                                                 Double operacao = totalContasAPagar - valorDoubleC;
+
+                                                                                if (operacao < 0){
+                                                                                    operacao = 0.0;
+                                                                                }
+
                                                                                 String cv = String.valueOf(operacao);
 
                                                                                 db.collection(usuarioID).document(ano).collection(mes).document("saidas")
@@ -423,6 +755,8 @@ public class ContasAPagar extends AppCompatActivity {
                                                                     });
                                                                 }
                                                             });
+
+
                                                         }
                                                     }
                                                 });
@@ -856,6 +1190,26 @@ public class ContasAPagar extends AppCompatActivity {
 
         androidx.appcompat.app.AlertDialog dialog = builder.create();
         dialog.show();
+    }
+    public void cancelarAlarme() {
+        int requestCode = 12345; // O mesmo requestCode usado ao configurar o alarme
+        Intent intent = new Intent(getApplicationContext(), AlarmReceber.class);
+        intent.putExtra("notification_text_r", "Seu texto de notificação aqui"); // Deve corresponder ao Intent usado originalmente
+
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            flags |= PendingIntent.FLAG_IMMUTABLE;
+        }
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), requestCode, intent, flags);
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        if (alarmManager != null) {
+            alarmManager.cancel(pendingIntent);
+            Toast.makeText(this, "Alarme desativado com sucesso", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Falha ao desativar o alarme", Toast.LENGTH_SHORT).show();
+        }
     }
 
 }

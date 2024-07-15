@@ -27,7 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import br.com.lucas.valli.fluxodecaixa.ContasAReceber;
+import br.com.lucas.valli.fluxodecaixa.Atividades.ContasAReceber;
 import br.com.lucas.valli.fluxodecaixa.R;
 
 public class FragmentContasAReceber extends Fragment {

@@ -1,12 +1,9 @@
 package br.com.lucas.valli.fluxodecaixa.FragmentActivity;
 
-import static androidx.core.content.ContextCompat.getSystemService;
-
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Canvas;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -29,35 +26,25 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
-import java.lang.annotation.ElementType;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import br.com.lucas.valli.fluxodecaixa.Adapter.AdapterDadosSaidaE;
 import br.com.lucas.valli.fluxodecaixa.Model.DadosSaidaE;
-import br.com.lucas.valli.fluxodecaixa.NovaSaida;
 import br.com.lucas.valli.fluxodecaixa.R;
-import br.com.lucas.valli.fluxodecaixa.TelaPrincipalEntradas;
-import br.com.lucas.valli.fluxodecaixa.TelaPrincipalSaidas;
-import dalvik.bytecode.OpcodeInfo;
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
 public class FragmentGE extends Fragment {

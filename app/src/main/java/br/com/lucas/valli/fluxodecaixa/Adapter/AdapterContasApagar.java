@@ -5,13 +5,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
@@ -19,7 +16,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import br.com.lucas.valli.fluxodecaixa.ContasAPagar;
+import br.com.lucas.valli.fluxodecaixa.Atividades.ContasAPagar;
 import br.com.lucas.valli.fluxodecaixa.Model.ContasApagar;
 import br.com.lucas.valli.fluxodecaixa.R;
 
