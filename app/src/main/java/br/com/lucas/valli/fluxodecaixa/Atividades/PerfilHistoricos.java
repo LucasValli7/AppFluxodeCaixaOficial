@@ -3,6 +3,7 @@ package br.com.lucas.valli.fluxodecaixa.Atividades;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -10,6 +11,7 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -102,8 +104,21 @@ public class PerfilHistoricos extends AppCompatActivity {
             }
         });
 
+       binding.swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refreshData();
+            }
+        });
 
 
+
+    }
+    private void refreshData() {
+        new Handler().postDelayed(() -> {
+            checkConnection();
+            binding.swipeRefreshLayout.setRefreshing(false);
+        }, 1000); // Simula um delay de 1 segundos
     }
 
     @Override
@@ -199,6 +214,8 @@ public class PerfilHistoricos extends AppCompatActivity {
                                         .document("Total");
                                 DocumentReference documentReferenceAnualSaidas = db.collection(usuarioID).document(ano).collection("ResumoAnual").document("saidas").collection("TotalSaidaAnual")
                                         .document("Total");
+                                DocumentReference documentReferenceResumo = db.collection(usuarioID).document("resumoCaixa").collection("ResumoDeCaixa").document("saidas").collection("total")
+                                        .document("ResumoTotal");
 
 
                                 db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("nova saida").document("categoria").collection("Desejos Pessoais")
@@ -223,35 +240,47 @@ public class PerfilHistoricos extends AppCompatActivity {
                                                                                     db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalSaidasDiario")
                                                                                             .document(dia).delete();
 
-                                                                                    documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+
+                                                                                    documentReferenceResumo.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                                                                                         @Override
-                                                                                        public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                                                                                            DocumentSnapshot documentSnapshot = task.getResult();
-                                                                                            if (documentSnapshot.exists()){
-                                                                                                Double totalMensal = Double.parseDouble(documentSnapshot.getString("ResultadoDaSomaSaida"));
-                                                                                                documentReferenceAnualSaidas.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                                                                                                    @Override
-                                                                                                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                                                                                                        DocumentSnapshot documentSnapshotAnual = task.getResult();
-                                                                                                        Double totalAnual = Double.parseDouble(documentSnapshotAnual.getString("ResultadoTotalSaidaAnual"));
-                                                                                                        Double op = totalAnual - totalMensal;
-                                                                                                        String opCv = String.valueOf(op);
-                                                                                                        db.collection(usuarioID).document(ano).collection("ResumoAnual").document("saidas").collection("TotalSaidaAnual")
-                                                                                                                .document("Total").update("ResultadoTotalSaidaAnual", opCv).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                                                                                    @Override
-                                                                                                                    public void onComplete(@NonNull Task<Void> task) {
-                                                                                                                        if (task.isSuccessful()){
-                                                                                                                            documentReference.delete();
-                                                                                                                            onStart();
+                                                                                        public void onComplete(@NonNull Task<DocumentSnapshot> taskResumo) {
+                                                                                            documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                                                @Override
+                                                                                                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                                                                                    DocumentSnapshot documentSnapshot = task.getResult();
+                                                                                                    DocumentSnapshot documentSnapshotResumo = taskResumo.getResult();
+                                                                                                    if (documentSnapshot.exists()){
+                                                                                                        Double totalMensal = Double.parseDouble(documentSnapshot.getString("ResultadoDaSomaSaida"));
+                                                                                                        documentReferenceAnualSaidas.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                                                            @Override
+                                                                                                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                                                                                                DocumentSnapshot documentSnapshotAnual = task.getResult();
+                                                                                                                Double totalAnual = Double.parseDouble(documentSnapshotAnual.getString("ResultadoTotalSaidaAnual"));
+                                                                                                                Double totalResumo = Double.parseDouble(documentSnapshotResumo.getString("ResultadoTotal"));
+                                                                                                                Double opResumo = totalResumo - totalMensal;
+                                                                                                                Double op = totalAnual - totalMensal;
+                                                                                                                String opCv = String.valueOf(op);
+                                                                                                                String opCvResumo = String.valueOf(opResumo);
 
-                                                                                                                        }
-                                                                                                                    }
-                                                                                                                });
+                                                                                                                documentReferenceResumo.update("ResultadoTotal",opCvResumo);
+                                                                                                                db.collection(usuarioID).document(ano).collection("ResumoAnual").document("saidas").collection("TotalSaidaAnual")
+                                                                                                                        .document("Total").update("ResultadoTotalSaidaAnual", opCv).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                                                                            @Override
+                                                                                                                            public void onComplete(@NonNull Task<Void> task) {
+                                                                                                                                if (task.isSuccessful()){
+                                                                                                                                    documentReference.delete();
+                                                                                                                                    onStart();
+
+                                                                                                                                }
+                                                                                                                            }
+                                                                                                                        });
+                                                                                                            }
+                                                                                                        });
+
+
                                                                                                     }
-                                                                                                });
-
-
-                                                                                            }
+                                                                                                }
+                                                                                            });
                                                                                         }
                                                                                     });
 
@@ -318,55 +347,68 @@ public class PerfilHistoricos extends AppCompatActivity {
                                 DocumentReference documentReferenceEntradasAnual = db.collection(usuarioID).document(ano).collection("ResumoAnual").document("entradas").collection("TotalEntradaAnual")
                                         .document("Total");
 
+                                DocumentReference documentReferenceResumo = db.collection(usuarioID).document("resumoCaixa").collection("ResumoDeCaixa").document("entradas").collection("total")
+                                        .document("ResumoTotal");
 
-                                db.collection(usuarioID).document(ano).collection(mes).document("entradas").collection("nova entrada")
-                                        .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                                            @Override
-                                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                                                if (task.isSuccessful()) {
-                                                    for (QueryDocumentSnapshot queryDocumentSnapshot : task.getResult()) {
-                                                        queryDocumentSnapshot.getReference().delete();
-                                                    }
-                                                    binding.progressBar.setVisibility(View.GONE);
-                                                    ShowIntesticial();
-                                                    Toast.makeText(PerfilHistoricos.this, "Entradas deletadas com sucesso", Toast.LENGTH_SHORT).show();
 
-                                                    db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalEntradaDiario")
-                                                            .document(dia).delete();
-
-                                                    documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                                                        @Override
-                                                        public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                                                            DocumentSnapshot documentSnapshot = task.getResult();
-                                                            if (documentSnapshot.exists()){
-                                                                Double totalMensal = Double.parseDouble(documentSnapshot.getString("ResultadoDaSomaEntrada"));
-                                                                documentReferenceEntradasAnual.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                                                                    @Override
-                                                                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                                                                        DocumentSnapshot documentSnapshotAnual = task.getResult();
-                                                                        Double totalAnual = Double.parseDouble(documentSnapshotAnual.getString("ResultadoTotalEntradaAnual"));
-                                                                        Double op = totalAnual - totalMensal;
-                                                                        String opCv = String.valueOf(op);
-                                                                        db.collection(usuarioID).document(ano).collection("ResumoAnual").document("entradas").collection("TotalEntradaAnual")
-                                                                                .document("Total").update("ResultadoTotalEntradaAnual", opCv).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                                                    @Override
-                                                                                    public void onComplete(@NonNull Task<Void> task) {
-                                                                                        if (task.isSuccessful()){
-                                                                                            documentReference.delete();
-                                                                                            onStart();
-                                                                                        }
-                                                                                    }
-                                                                                });
-                                                                    }
-                                                                });
+                                documentReferenceResumo.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<DocumentSnapshot> taskResumo) {
+                                        db.collection(usuarioID).document(ano).collection(mes).document("entradas").collection("nova entrada")
+                                                .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                                                    @Override
+                                                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                                        if (task.isSuccessful()) {
+                                                            for (QueryDocumentSnapshot queryDocumentSnapshot : task.getResult()) {
+                                                                queryDocumentSnapshot.getReference().delete();
                                                             }
+                                                            binding.progressBar.setVisibility(View.GONE);
+                                                            ShowIntesticial();
+                                                            Toast.makeText(PerfilHistoricos.this, "Entradas deletadas com sucesso", Toast.LENGTH_SHORT).show();
+
+                                                            db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalEntradaDiario")
+                                                                    .document(dia).delete();
+
+                                                            documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                @Override
+                                                                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                                                    DocumentSnapshot documentSnapshot = task.getResult();
+                                                                    DocumentSnapshot documentSnapshotResumo = taskResumo.getResult();
+                                                                    if (documentSnapshot.exists()){
+                                                                        Double totalMensal = Double.parseDouble(documentSnapshot.getString("ResultadoDaSomaEntrada"));
+                                                                        documentReferenceEntradasAnual.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                            @Override
+                                                                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                                                                DocumentSnapshot documentSnapshotAnual = task.getResult();
+                                                                                Double totalAnual = Double.parseDouble(documentSnapshotAnual.getString("ResultadoTotalEntradaAnual"));
+                                                                                Double totalResumo = Double.parseDouble(documentSnapshotResumo.getString("ResultadoTotal"));
+                                                                                Double op = totalAnual - totalMensal;
+                                                                                Double opResumo = totalResumo - totalMensal;
+                                                                                String opCv = String.valueOf(op);
+                                                                                String opCvResumo = String.valueOf(opResumo);
+                                                                                documentReferenceResumo.update("ResultadoTotal",opCvResumo);
+                                                                                db.collection(usuarioID).document(ano).collection("ResumoAnual").document("entradas").collection("TotalEntradaAnual")
+                                                                                        .document("Total").update("ResultadoTotalEntradaAnual", opCv).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                                            @Override
+                                                                                            public void onComplete(@NonNull Task<Void> task) {
+                                                                                                if (task.isSuccessful()){
+                                                                                                    documentReference.delete();
+                                                                                                    onStart();
+                                                                                                }
+                                                                                            }
+                                                                                        });
+                                                                            }
+                                                                        });
+                                                                    }
+                                                                }
+                                                            });
                                                         }
-                                                    });
-                                                }
 
 
-                                            }
-                                        });
+                                                    }
+                                                });
+                                    }
+                                });
 
                             }
                         }
@@ -461,7 +503,7 @@ public class PerfilHistoricos extends AppCompatActivity {
         typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         typeSpinner.setAdapter(typeAdapter);
 
-        // Configura o Spinner de tipo
+        // Configura o Spinner de categoria
         Spinner categorySpinner = dialogView.findViewById(R.id.category_spinner);
         ArrayAdapter<CharSequence> categoryAdapter = ArrayAdapter.createFromResource(this,
                 R.array.category_array, android.R.layout.simple_spinner_item);
@@ -642,7 +684,7 @@ public class PerfilHistoricos extends AppCompatActivity {
     public void LoadInterticialAd(){
         AdRequest adRequest = new AdRequest.Builder().build();
 
-        InterstitialAd.load(this,("ca-app-pub-3940256099942544/1033173712"), adRequest,
+        InterstitialAd.load(this,("ca-app-pub-7099783455876849/3315422269"), adRequest,
                 new InterstitialAdLoadCallback() {
                     @Override
                     public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {

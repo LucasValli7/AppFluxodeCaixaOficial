@@ -29,12 +29,9 @@ public class AlarmReceber extends BroadcastReceiver {
         // Configurar a intenção para abrir o aplicativo quando a notificação for clicada
         Intent resultIntent = new Intent(context, ContasAReceber.class);
 
-        int flags;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
-        } else {
-            flags = PendingIntent.FLAG_UPDATE_CURRENT;
-        }
+        int flags = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) ?
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE :
+                PendingIntent.FLAG_UPDATE_CURRENT;
 
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, resultIntent, flags);
 

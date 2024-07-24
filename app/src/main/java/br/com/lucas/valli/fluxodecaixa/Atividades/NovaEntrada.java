@@ -27,6 +27,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAd;
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
@@ -65,6 +66,7 @@ public class NovaEntrada extends AppCompatActivity {
         Initialize();
 
     }
+
     public boolean checkConnection(){
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
@@ -93,6 +95,7 @@ public class NovaEntrada extends AppCompatActivity {
                 EnviarTotalDiario();
                 EnviarTotalMensal();
                 EnviarTotalAnual();
+                EnviarTotalResumoCaixa();
                 ShowIntesticial();
                 binding.floatingActionButton.setEnabled(false);
                 binding.progressBar.setVisibility(View.GONE);
@@ -159,7 +162,7 @@ public class NovaEntrada extends AppCompatActivity {
     public void LoadInterticialAd(){
         AdRequest adRequest = new AdRequest.Builder().build();
 
-        InterstitialAd.load(this, String.valueOf("ca-app-pub-3940256099942544/1033173712"), adRequest,
+        InterstitialAd.load(this, String.valueOf("ca-app-pub-7099783455876849/3315422269"), adRequest,
                 new InterstitialAdLoadCallback() {
                     @Override
                     public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
@@ -266,36 +269,14 @@ public class NovaEntrada extends AppCompatActivity {
                     Map<String, Object> valorTotalDiairo = new HashMap<>();
                     valorTotalDiairo.put("ResultadoDaSomaEntradaDiario", SomaEntradaCv);
 
-                    db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalEntradaDiario")
-                            .document(dia).set(valorTotalDiairo).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
+                    documentReferenceDiario.set(valorTotalDiairo);
                 }else {
                     String ValorCvString = String.valueOf(valorCV);
 
                     Map<String, Object> valorTotalDiairo = new HashMap<>();
                     valorTotalDiairo.put("ResultadoDaSomaEntradaDiario", ValorCvString);
 
-                    db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalEntradaDiario")
-                            .document(dia).set(valorTotalDiairo).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
+                    documentReferenceDiario.set(valorTotalDiairo);
                 }
 
             }
@@ -330,37 +311,15 @@ public class NovaEntrada extends AppCompatActivity {
                     Map<String, Object> valorTotalMensal = new HashMap<>();
                     valorTotalMensal.put("ResultadoDaSomaEntrada", SomaEntradaCv);
 
-                    db.collection(usuarioID).document(ano).collection(mes).document("entradas").collection("Total de Entradas")
-                            .document("Total").set(valorTotalMensal).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
+                    documentReference.set(valorTotalMensal);
 
                 } else  {
                     String ValorCvString = String.valueOf(valorCV);
 
-                    Map<String, Object> valorTotal = new HashMap<>();
-                    valorTotal.put("ResultadoDaSomaEntrada", ValorCvString);
+                    Map<String, Object> valorTotalMensal = new HashMap<>();
+                    valorTotalMensal.put("ResultadoDaSomaEntrada", ValorCvString);
 
-                    db.collection(usuarioID).document(ano).collection(mes).document("entradas").collection("Total de Entradas")
-                            .document("Total").set(valorTotal).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
+                    documentReference.set(valorTotalMensal);
                 }
             }
         });
@@ -391,18 +350,7 @@ public class NovaEntrada extends AppCompatActivity {
                     Map<String, Object> ValorTotalAnual = new HashMap<>();
                     ValorTotalAnual.put("ResultadoTotalEntradaAnual", SomaEntradaCv);
 
-                    db.collection(usuarioID).document(ano).collection("ResumoAnual").document("entradas").collection("TotalEntradaAnual")
-                            .document("Total").set(ValorTotalAnual).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
+                    documentReferenceEntradasAnual.set(ValorTotalAnual);
 
 
                 }else {
@@ -411,21 +359,48 @@ public class NovaEntrada extends AppCompatActivity {
                     Map<String, Object> ValorTotalAnual = new HashMap<>();
                     ValorTotalAnual.put("ResultadoTotalEntradaAnual", ValorCvString);
 
-                    db.collection(usuarioID).document(ano).collection("ResumoAnual").document("entradas").collection("TotalEntradaAnual")
-                            .document("Total").set(ValorTotalAnual).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
+                    documentReferenceEntradasAnual.set(ValorTotalAnual);
                 }
 
 
+            }
+        });
+    }
+    public void EnviarTotalResumoCaixa(){
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        //document reference ResumoAnual
+        DocumentReference documentReference = db.collection(usuarioID).document("resumoCaixa").collection("ResumoDeCaixa").document("entradas").collection("total")
+                .document("ResumoTotal");
+
+        documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                DocumentSnapshot documentSnapshot= task.getResult();
+                String str = formatPriceSave(binding.editNovoValor.getText().toString());
+                Double ValorCv = Double.parseDouble(str);
+
+                if (documentSnapshot.contains("ResultadoTotal")){
+                    Double ValorDiario = Double.parseDouble(documentSnapshot.getString("ResultadoTotal"));
+                    Double SomaSaida = ValorDiario + ValorCv;
+                    String SomaSaidaCv = String.valueOf(SomaSaida);
+
+                    //HasMap total
+                    Map<String, Object> valorTotal = new HashMap<>();
+                    valorTotal.put("ResultadoTotal", SomaSaidaCv);
+
+                    documentReference.set(valorTotal);
+
+                }else {
+                    String ValorStringCv = String.valueOf(ValorCv);
+                    //HasMap total
+                    Map<String, Object> valorTotal = new HashMap<>();
+                    valorTotal.put("ResultadoTotal", ValorStringCv);
+
+                    documentReference.set(valorTotal);
+
+                }
             }
         });
     }
@@ -443,7 +418,6 @@ public class NovaEntrada extends AppCompatActivity {
         String ValorEntradaDouble = String.valueOf(ValorEntrada);
         String dataEntrada = dia + mes + ano;
         String formaPagament = binding.autoCompleteTextForm.getText().toString();
-        String formaPagamento = "Entrada realizada por " + formaPagament;
         String id = UUID.randomUUID().toString();
 
 
@@ -454,7 +428,7 @@ public class NovaEntrada extends AppCompatActivity {
         entradas.put("ValorDeEntrada", ValorEntradaConvertido);
         entradas.put("TipoDeEntrada", DadosEntrada);
         entradas.put("id", id);
-        entradas.put("formPagamento", formaPagamento);
+        entradas.put("formPagamento", formaPagament);
         entradas.put("idMovimentacao", idMovimentacao);
         usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
@@ -464,17 +438,7 @@ public class NovaEntrada extends AppCompatActivity {
                 .collection("nova entrada").document(id);
 
 
-        documentReference.set(entradas).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-
-            }
-        });
+        documentReference.set(entradas);
 
 
     }

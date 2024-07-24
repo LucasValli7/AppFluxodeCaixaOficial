@@ -93,8 +93,8 @@ public class FragmentContasAReceber extends Fragment {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        DocumentReference documentReference = db.collection(usuarioID).document(ano).collection(mes).document("entradas")
-                .collection("Total Contas A Receber").document("Total");
+        DocumentReference documentReference = db.collection(usuarioID).document("ContasAreceber")
+                .collection("TotalContasAReceber").document("Total");
         documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {

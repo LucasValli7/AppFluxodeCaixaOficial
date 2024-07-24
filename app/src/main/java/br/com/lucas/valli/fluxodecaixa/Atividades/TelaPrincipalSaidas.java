@@ -48,6 +48,8 @@ public class TelaPrincipalSaidas extends AppCompatActivity {
         checkConnection();
 
     }
+
+
     public boolean checkConnection(){
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();

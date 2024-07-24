@@ -10,10 +10,17 @@
     android:background="@color/black"
     tools:context=".Atividades.TelaPrincipal">
 
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true">
+
+
 
 <androidx.constraintlayout.widget.ConstraintLayout
     android:layout_width="match_parent"
@@ -91,7 +98,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:layout_marginEnd="15dp"
-            android:text="Total em caixa"
+            android:text="Saldo atual"
             android:textColor="@color/black"
             android:textSize="20sp"
             android:textStyle="bold"
@@ -228,14 +235,10 @@
             </androidx.viewpager.widget.ViewPager>
 
         </LinearLayout>
-
-
-
-
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <RelativeLayout
         android:layout_width="280dp"
@@ -243,8 +246,6 @@
         android:background="@color/white"
         android:layout_gravity ="start"
         >
-
-
         <include
             layout="@layout/nav_drawer"/>
     </RelativeLayout>

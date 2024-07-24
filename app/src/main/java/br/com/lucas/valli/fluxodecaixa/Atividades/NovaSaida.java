@@ -81,7 +81,6 @@ public class NovaSaida extends AppCompatActivity {
         super.onStart();
         PassarDataAutomatica();
         BtnSalvar();
-        OuvinteRadioGroup();
         Initialize();
 
     }
@@ -107,61 +106,18 @@ public class NovaSaida extends AppCompatActivity {
                             }
                         });
                 snackbar.show();
-            } else if (binding.checksSim.isChecked() || binding.checksNao.isChecked()) {
+            }  else {
                 Toast.makeText(NovaSaida.this, "Salvo com Sucesso", Toast.LENGTH_SHORT).show();
                 EnviarDadosListaSaidaBD();
                 EnviarTotalDiario();
                 EnviarTotalMensal();
                 EnviarTotalAnual();
+                EnviarTotalResumoCaixa();
                 Condicao();
                 ShowIntesticial();
                 binding.floatingActionButton.setEnabled(false);
                 binding.progressBar.setVisibility(View.GONE);
-
-                if (binding.checksSim.isChecked()) {
-                    String dataVencimento = binding.txtDataVencimento.getText().toString();
-                    if (!dataVencimento.isEmpty()){
-
-
-                        AlertDialog.Builder builder = new AlertDialog.Builder(NovaSaida.this);
-                        builder.setTitle("Deseja adicionar um lembrete de pagamento?");
-                        builder.setCancelable(false);
-                        builder.setPositiveButton("Sim", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                // Lógica para quando o radioButton1 é selecionado
-                                String titulo = binding.editNovaSaida.getText().toString();
-                                String valor = binding.editNovoValor.getText().toString();
-                                scheduleNotification("Pagar \" " + titulo + "\" no valor de " + "R$ " + valor);
-                            }
-                        }).setNegativeButton("Não", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Intent intent = new Intent(NovaSaida.this, TelaPrincipal.class);
-                                finish();
-                            }
-                        }).show();
-
-                    }else {
-                        Toast.makeText(this, "Preencha o campo data de vencimento", Toast.LENGTH_SHORT).show();
-                    }
-
-                }else {
-                    finish();
-                }
-
-        } else {
-
-                Snackbar snackbar = Snackbar.make(getWindow().getDecorView(),"Preencha o campo Contas a Pagar",Snackbar.LENGTH_INDEFINITE)
-                        .setAction("OK", new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-
-                            }
-                        });
-                snackbar.show();
-
-
+                finish();
             }
 
         }
@@ -189,13 +145,6 @@ public class NovaSaida extends AppCompatActivity {
         setContentView(binding.getRoot());
         FormaPagamento();
         Categoria();
-
-        binding.txtDataVencimento.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                abrirCalendar();
-            }
-        });
         binding.editNovoValor.addTextChangedListener(new ConversorDeMoeda(binding.editNovoValor));
         binding.tolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -228,7 +177,7 @@ public class NovaSaida extends AppCompatActivity {
     public void LoadInterticialAd(){
         AdRequest adRequest = new AdRequest.Builder().build();
 
-        InterstitialAd.load(this,String.valueOf("ca-app-pub-3940256099942544/1033173712"), adRequest,
+        InterstitialAd.load(this,String.valueOf("ca-app-pub-7099783455876849/3315422269"), adRequest,
                 new InterstitialAdLoadCallback() {
                     @Override
                     public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
@@ -356,26 +305,14 @@ public class NovaSaida extends AppCompatActivity {
                     Map<String, Object> valorTotalDiairo = new HashMap<>();
                     valorTotalDiairo.put("ResultadoDaSomaSaidaDiario", SomaSaidaCv);
 
-                    db.collection(usuarioID).document(ano).collection(mes2).document("ResumoDiario").collection("TotalSaidasDiario")
-                            .document(dia2).set(valorTotalDiairo).addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(Void unused) {
-
-                                }
-                            });
+                    documentReferenceTotalDiario.set(valorTotalDiairo);
 
                 }else {
                     String ValorStringCv = String.valueOf(ValorCv);
                     Map<String, Object> valorTotalDiairo = new HashMap<>();
                     valorTotalDiairo.put("ResultadoDaSomaSaidaDiario", ValorStringCv);
 
-                    db.collection(usuarioID).document(ano).collection(mes2).document("ResumoDiario").collection("TotalSaidasDiario")
-                            .document(dia2).set(valorTotalDiairo).addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(Void unused) {
-
-                                }
-                            });
+                    documentReferenceTotalDiario.set(valorTotalDiairo);
 
                 }
             }
@@ -408,19 +345,7 @@ public class NovaSaida extends AppCompatActivity {
                     valorTotalMensal.put("ResultadoDaSomaSaida", SomaSaidaCv);
 
                     // recuperar total(geral)
-                    db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de Saidas")
-                            .document("Total").set(valorTotalMensal).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
+                    documentReferenceMensal.set(valorTotalMensal);
                 }else {
                     String ValorStringCv = String.valueOf(ValorCv);
                     //HasMap total
@@ -428,25 +353,12 @@ public class NovaSaida extends AppCompatActivity {
                     valorTotalMensal.put("ResultadoDaSomaSaida", ValorStringCv);
 
                     // recuperar total(geral)
-                    db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de Saidas")
-                            .document("Total").set(valorTotalMensal).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
+                    documentReferenceMensal.set(valorTotalMensal);
                 }
             }
         });
     }
     public void EnviarTotalAnual(){
-        String mes = binding.addData2.getText().toString();
         String ano = binding.addData3.getText().toString();
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -472,13 +384,7 @@ public class NovaSaida extends AppCompatActivity {
                     Map<String, Object> valorTotalAnual = new HashMap<>();
                     valorTotalAnual.put("ResultadoTotalSaidaAnual", SomaSaidaCv);
 
-                    db.collection(usuarioID).document(ano).collection("ResumoAnual").document("saidas").collection("TotalSaidaAnual")
-                            .document("Total").set(valorTotalAnual).addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(Void unused) {
-
-                                }
-                            });
+                    documentReferenceAnual.set(valorTotalAnual);
 
                 }else {
                     String ValorStringCv = String.valueOf(ValorCv);
@@ -486,13 +392,45 @@ public class NovaSaida extends AppCompatActivity {
                     Map<String, Object> valorTotalAnual = new HashMap<>();
                     valorTotalAnual.put("ResultadoTotalSaidaAnual", ValorStringCv);
 
-                    db.collection(usuarioID).document(ano).collection("ResumoAnual").document("saidas").collection("TotalSaidaAnual")
-                            .document("Total").set(valorTotalAnual).addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(Void unused) {
+                    documentReferenceAnual.set(valorTotalAnual);
 
-                                }
-                            });
+                }
+            }
+        });
+    }
+    public void EnviarTotalResumoCaixa(){
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        //document reference ResumoAnual
+        DocumentReference documentReference = db.collection(usuarioID).document("resumoCaixa").collection("ResumoDeCaixa").document("saidas").collection("total")
+                .document("ResumoTotal");
+
+        documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                DocumentSnapshot documentSnapshot= task.getResult();
+                String str = formatPriceSave(binding.editNovoValor.getText().toString());
+                Double ValorCv = Double.parseDouble(str);
+
+                if (documentSnapshot.contains("ResultadoTotal")){
+                    Double ValorDiario = Double.parseDouble(documentSnapshot.getString("ResultadoTotal"));
+                    Double SomaSaida = ValorDiario + ValorCv;
+                    String SomaSaidaCv = String.valueOf(SomaSaida);
+
+                    //HasMap total
+                    Map<String, Object> valorTotal = new HashMap<>();
+                    valorTotal.put("ResultadoTotal", SomaSaidaCv);
+
+                    documentReference.set(valorTotal);
+
+                }else {
+                    String ValorStringCv = String.valueOf(ValorCv);
+                    //HasMap total
+                    Map<String, Object> valorTotal = new HashMap<>();
+                    valorTotal.put("ResultadoTotal", ValorStringCv);
+
+                    documentReference.set(valorTotal);
 
                 }
             }
@@ -525,36 +463,14 @@ public class NovaSaida extends AppCompatActivity {
                     Map<String, Object> valorTotalE = new HashMap<>();
                     valorTotalE.put("ResultadoDaSomaSaidaE", SomaSaidaCv);
 
-                    db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de SaidasE")
-                            .document("Total").set(valorTotalE).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
+                    documentReferenceE.set(valorTotalE);
                 }else {
                     String ValorCvString = String.valueOf(valorCV);
                     // HasMap total E
                     Map<String, Object> valorTotalE = new HashMap<>();
                     valorTotalE.put("ResultadoDaSomaSaidaE", ValorCvString);
 
-                    db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de SaidasE")
-                            .document("Total").set(valorTotalE).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
+                    documentReferenceE.set(valorTotalE);
                 }
 
             }
@@ -587,36 +503,14 @@ public class NovaSaida extends AppCompatActivity {
                     Map<String, Object> valorTotalP = new HashMap<>();
                     valorTotalP.put("ResultadoDaSomaSaidaP", SomaSaidaCv);
 
-                    db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de SaidasP")
-                            .document("Total").set(valorTotalP).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
+                    documentReferenceP.set(valorTotalP);
                 }else {
                     String ValorCvString = String.valueOf(valorCV);
                     // HasMap total E
                     Map<String, Object> valorTotalP = new HashMap<>();
                     valorTotalP.put("ResultadoDaSomaSaidaP", ValorCvString);
 
-                    db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de SaidasP")
-                            .document("Total").set(valorTotalP).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
+                    documentReferenceP.set(valorTotalP);
                 }
 
             }
@@ -649,98 +543,14 @@ public class NovaSaida extends AppCompatActivity {
                     Map<String, Object> valorTotalD = new HashMap<>();
                     valorTotalD.put("ResultadoDaSomaSaidaD", SomaSaidaCv);
 
-                    db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de SaidasD")
-                            .document("Total").set(valorTotalD).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
+                    documentReferenceD.set(valorTotalD);
                 }else {
                     String ValorCvString = String.valueOf(valorCV);
                     // HasMap total D
                     Map<String, Object> valorTotalD = new HashMap<>();
                     valorTotalD.put("ResultadoDaSomaSaidaD", ValorCvString);
 
-                    db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("Total de SaidasD")
-                            .document("Total").set(valorTotalD).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
-                }
-
-            }
-        });
-    }
-    public void EnviarTotalContasPagar(){
-        String mes = binding.addData2.getText().toString();
-        String ano = binding.addData3.getText().toString();
-
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-        //document reference total Contas À pagar
-        DocumentReference documentReferenceC = db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                .collection("Total Contas A Pagar").document("Total");
-
-        documentReferenceC.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> taskC) {
-                DocumentSnapshot documentSnapshotC = taskC.getResult();
-                String str = formatPriceSave(binding.editNovoValor.getText().toString());
-                Double valorCV = Double.parseDouble(str);
-
-                if (documentSnapshotC.contains("ResultadoDaSomaSaidaC")){
-                    Double ValorC = Double.parseDouble(documentSnapshotC.getString("ResultadoDaSomaSaidaC"));
-                    Double SomaSaida = ValorC + valorCV;
-                    String SomaSaidaCv = String.valueOf(SomaSaida);
-
-                    // HasMap total D
-                    Map<String, Object> valorTotalC = new HashMap<>();
-                    valorTotalC.put("ResultadoDaSomaSaidaC", SomaSaidaCv);
-
-                    db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                            .collection("Total Contas A Pagar").document("Total").set(valorTotalC).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
-                }else {
-                    String ValorCvString = String.valueOf(valorCV);
-                    // HasMap total C
-                    Map<String, Object> valorTotalC = new HashMap<>();
-                    valorTotalC.put("ResultadoDaSomaSaidaC", ValorCvString);
-
-                    db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                            .collection("Total Contas A Pagar").document("Total").set(valorTotalC).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
+                    documentReferenceD.set(valorTotalD);
                 }
 
             }
@@ -749,9 +559,6 @@ public class NovaSaida extends AppCompatActivity {
     public void Condicao(){
 
         String epd = binding.autoCompleteTextCategoria.getText().toString();
-        if (binding.checksSim.isChecked()) {
-            EnviarTotalContasPagar();
-        }
 
         if (epd.equals("Gastos Essenciais")){
             EnviarTotalGastosE();
@@ -766,7 +573,7 @@ public class NovaSaida extends AppCompatActivity {
         String dia = binding.addData.getText().toString();
         String mes = binding.addData2.getText().toString();
         String ano = binding.addData3.getText().toString();
-        String dataVencimento = binding.txtDataVencimento.getText().toString();
+
 
 
         String DadosSaida = binding.editNovaSaida.getText().toString();
@@ -779,7 +586,6 @@ public class NovaSaida extends AppCompatActivity {
 
         String dataSaida = dataFormat;
         String formaPagament = binding.autoCompleteTextForm.getText().toString();
-        String formaPagamento = "Saída realizada por " + formaPagament;
         String categoria = binding.autoCompleteTextCategoria.getText().toString();
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -789,52 +595,15 @@ public class NovaSaida extends AppCompatActivity {
         saidas.put("ValorDeSaida", ValorSaidaConvertido);
         saidas.put("dataDeSaida", dataSaida);
         saidas.put("id", id);
-        saidas.put("formPagamento", formaPagamento);
+        saidas.put("formPagamento", formaPagament);
         saidas.put("categoria", categoria);
-
-        Map<String, Object> contasApagar = new HashMap<>();
-        contasApagar.put("TipoDeSaida", DadosSaida);
-        contasApagar.put("ValorDeSaidaDouble", ValorSaidaDouble);
-        contasApagar.put("ValorDeSaida", ValorSaidaConvertido);
-        contasApagar.put("dataDeSaida", dataSaida);
-        contasApagar.put("dataVencimento", dataVencimento);
-        contasApagar.put("id", id);
-        contasApagar.put("formPagamento", formaPagamento);
-        contasApagar.put("categoria", categoria);
         usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
 
         DocumentReference documentReference = db.collection(usuarioID).document(ano).collection(mes).document("saidas")
                 .collection("nova saida").document("categoria").collection(categoria).document(id);
 
-        DocumentReference documentReferenceContasApagar = db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                .collection("ContasApagar").document(id);
-
-
-        documentReference.set(saidas).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-
-            }
-        });
-
-        if (binding.checksSim.isChecked()){
-            documentReferenceContasApagar.set(contasApagar).addOnCompleteListener(new OnCompleteListener<Void>() {
-                @Override
-                public void onComplete(@NonNull Task<Void> task) {
-
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-
-                }
-            });
-        }
+        documentReference.set(saidas);
 
     }
     public void PassarDataAutomatica(){
@@ -845,7 +614,6 @@ public class NovaSaida extends AppCompatActivity {
         binding.addData.setText(dia + "/");
         binding.addData2.setText(mes+ "/");
         binding.addData3.setText(ano);
-        binding.txtDataVencimento.setText(dia+"/"+mes+"/"+ano);
     }
     private void scheduleNotification(String text) {
         Calendar currentTime = Calendar.getInstance();
@@ -911,62 +679,6 @@ public class NovaSaida extends AppCompatActivity {
                         timePickerDialog.show();
                     }
                 }, year, month, dayOfMonth);
-
-        datePickerDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancelar", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-                finish();
-            }
-        });
-
-        // Mostrar o DatePickerDialog
-        datePickerDialog.show();
-    }
-    public void OuvinteRadioGroup(){
-        binding.radioGroup1.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @SuppressLint("NonConstantResourceId")
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                // checkedId é o ID do RadioButton selecionado no RadioGroup
-                switch (checkedId) {
-                    case R.id.checksSim:
-                        binding.txtDataVencimento.setVisibility(View.VISIBLE);
-                        binding.txtVencimento.setVisibility(View.VISIBLE);
-                        break;
-                    case R.id.checksNao:
-                        binding.txtDataVencimento.setVisibility(View.GONE);
-                        binding.txtVencimento.setVisibility(View.GONE);
-
-
-                        break;
-                    // Adicione casos para outros RadioButtons, se necessário
-                }
-            }
-        });
-    }
-    public void abrirCalendar() {
-        Calendar currentTime = Calendar.getInstance();
-        int year = currentTime.get(Calendar.YEAR);
-        int month = currentTime.get(Calendar.MONTH);
-        int dayOfMonth = currentTime.get(Calendar.DAY_OF_MONTH);
-
-
-        DatePickerDialog datePickerDialog = new DatePickerDialog(this,
-                new DatePickerDialog.OnDateSetListener() {
-                    @Override
-                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                        // Adicionando 1 ao monthOfYear pois os meses em Calendar começam em 0 (Janeiro é 0)
-                        monthOfYear += 1;
-                        String formattedDate = String.format("%02d/%02d/%04d", dayOfMonth, monthOfYear, year);
-                        binding.txtDataVencimento.setText(formattedDate);
-                    }
-                }, year, month, dayOfMonth);
-
-        // Exibindo a data atual no formato correto no TextView
-        month += 1; // Adicionando 1 ao mês atual
-        String formattedDate = String.format("%02d/%02d/%04d", dayOfMonth, month, year);
-        binding.txtDataVencimento.setText(formattedDate);
 
         datePickerDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancelar", new DialogInterface.OnClickListener() {
             @Override

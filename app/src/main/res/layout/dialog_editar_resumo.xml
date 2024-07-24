@@ -16,17 +16,8 @@
         android:textColor="@color/black"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:text="Editar lançamento" />
+        android:text="Ajustar saldo" />
 
-    <ImageView
-        android:id="@+id/img_relogio"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:src="@drawable/ic_alarm_activated"
-        android:layout_marginEnd="15dp"
-        app:layout_constraintBottom_toBottomOf="@+id/txt_titulo"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/txt_titulo" />
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -38,25 +29,13 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/txt_titulo">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingBottom="8dp"
-            android:text="Tipo de entrada" />
-
-        <EditText
-            android:id="@+id/edit_tipoEntrada"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:maxLength="20"
-            android:inputType="textCapWords"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingTop="16dp"
             android:paddingBottom="8dp"
-            android:text="Valor de entrada" />
+            android:text="Digite o saldo atual" />
 
         <EditText
             android:id="@+id/edit_valorEntrada"
@@ -64,17 +43,8 @@
             android:layout_height="wrap_content"
             android:inputType="number" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingBottom="8dp"
-            android:text="Forma de pagamento" />
 
-        <EditText
-            android:id="@+id/form_pagament"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="textCapWords"/>
+
 
     </LinearLayout>
 

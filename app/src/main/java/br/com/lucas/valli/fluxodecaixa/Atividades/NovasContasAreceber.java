@@ -2,6 +2,7 @@ package br.com.lucas.valli.fluxodecaixa.Atividades;
 
 import static br.com.lucas.valli.fluxodecaixa.Classes.ConversorDeMoeda.formatPriceSave;
 
+import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
 import android.app.PendingIntent;
@@ -19,6 +20,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.DatePicker;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -74,6 +76,7 @@ public class NovasContasAreceber extends AppCompatActivity {
         PassarDataAutomatica();
         BtnSalvar();
         Initialize();
+        OuvinteRadioGroup();
 
     }
     @Override
@@ -140,18 +143,22 @@ public class NovasContasAreceber extends AppCompatActivity {
                         });
                 snackbar.show();
 
-            }else {
-
+            }else if (binding.checksSim.isChecked() || binding.checksNao.isChecked()){
                 Toast.makeText(NovasContasAreceber.this,"Salvo com Sucesso",Toast.LENGTH_SHORT).show();
                 EnviarDadosListaEntradaBD();
                 EnviarTotalContasReceber();
-                String titulo = binding.editNovaEntrada.getText().toString();
-                String valor = binding.editNovoValor.getText().toString();
-                AgendarNotificacao("Receber \" " + titulo + "\" no valor de " + "R$ " + valor);
                 ShowIntesticial();
                 binding.floatingActionButton.setEnabled(false);
                 binding.progressBar.setVisibility(View.GONE);
 
+                if (binding.checksSim.isChecked()) {
+                    String titulo = binding.editNovaEntrada.getText().toString();
+                    String valor = binding.editNovoValor.getText().toString();
+                    AgendarNotificacao("Receber \" " + titulo + "\" no valor de " + "R$ " + valor);
+                }
+                finish();
+            }else {
+                Toast.makeText(this, "Preencha todos os campos", Toast.LENGTH_SHORT).show();
             }
         }
         if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI){
@@ -183,7 +190,7 @@ public class NovasContasAreceber extends AppCompatActivity {
     public void LoadInterticialAd(){
         AdRequest adRequest = new AdRequest.Builder().build();
 
-        InterstitialAd.load(this, String.valueOf("ca-app-pub-3940256099942544/1033173712"), adRequest,
+        InterstitialAd.load(this, String.valueOf("ca-app-pub-7099783455876849/3315422269"), adRequest,
                 new InterstitialAdLoadCallback() {
                     @Override
                     public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
@@ -264,195 +271,6 @@ public class NovasContasAreceber extends AppCompatActivity {
         });
 
     }
-    public void EnviarTotalDiario(){
-        String mes = new SimpleDateFormat("MM", new Locale("pt", "BR")).format(x);
-        String ano = new SimpleDateFormat("yyyy", new Locale("pt", "BR")).format(x);
-
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-        DocumentReference documentReferenceDiario = db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalEntradaDiario")
-                .document(dia);
-
-        documentReferenceDiario.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> taskDiario) {
-                DocumentSnapshot documentSnapshotDiario = taskDiario.getResult();
-                String str = formatPriceSave(binding.editNovoValor.getText().toString());
-                Double valorCV = Double.parseDouble(str);
-
-                if (documentSnapshotDiario.contains("ResultadoDaSomaEntradaDiario")){
-                    Double ValorDiario = Double.parseDouble(documentSnapshotDiario.getString("ResultadoDaSomaEntradaDiario"));
-
-                    Double SomaEntrada = ValorDiario + valorCV;
-                    String SomaEntradaCv = String.valueOf(SomaEntrada);
-
-                    Map<String, Object> valorTotalDiairo = new HashMap<>();
-                    valorTotalDiairo.put("ResultadoDaSomaEntradaDiario", SomaEntradaCv);
-
-                    db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalEntradaDiario")
-                            .document(dia).set(valorTotalDiairo).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
-                }else {
-                    String ValorCvString = String.valueOf(valorCV);
-
-                    Map<String, Object> valorTotalDiairo = new HashMap<>();
-                    valorTotalDiairo.put("ResultadoDaSomaEntradaDiario", ValorCvString);
-
-                    db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalEntradaDiario")
-                            .document(dia).set(valorTotalDiairo).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
-                }
-
-            }
-        });
-    }
-    public void EnviarTotalMensal(){
-
-        String mes = new SimpleDateFormat("MM", new Locale("pt", "BR")).format(x);
-        String ano = new SimpleDateFormat("yyyy", new Locale("pt", "BR")).format(x);
-
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-
-        DocumentReference documentReference = db.collection(usuarioID).document(ano).collection(mes).document("entradas").collection("Total de Entradas")
-                .document("Total");
-
-        documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                DocumentSnapshot documentSnapshot = task.getResult();
-                String str = formatPriceSave(binding.editNovoValor.getText().toString());
-                Double valorCV = Double.parseDouble(str);
-
-                if (documentSnapshot.exists()){
-
-                    Double ValorMensal = Double.parseDouble(documentSnapshot.getString("ResultadoDaSomaEntrada"));
-
-                    Double SomaEntrada = ValorMensal + valorCV;
-                    String SomaEntradaCv = String.valueOf(SomaEntrada);
-
-                    Map<String, Object> valorTotalMensal = new HashMap<>();
-                    valorTotalMensal.put("ResultadoDaSomaEntrada", SomaEntradaCv);
-
-                    db.collection(usuarioID).document(ano).collection(mes).document("entradas").collection("Total de Entradas")
-                            .document("Total").set(valorTotalMensal).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
-
-                } else  {
-                    String ValorCvString = String.valueOf(valorCV);
-
-                    Map<String, Object> valorTotal = new HashMap<>();
-                    valorTotal.put("ResultadoDaSomaEntrada", ValorCvString);
-
-                    db.collection(usuarioID).document(ano).collection(mes).document("entradas").collection("Total de Entradas")
-                            .document("Total").set(valorTotal).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
-                }
-            }
-        });
-    }
-    public void EnviarTotalAnual(){
-        String mes = new SimpleDateFormat("MM", new Locale("pt", "BR")).format(x);
-        String ano = new SimpleDateFormat("yyyy", new Locale("pt", "BR")).format(x);
-
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-        DocumentReference documentReferenceEntradasAnual = db.collection(usuarioID).document(ano).collection("ResumoAnual").document("entradas").collection("TotalEntradaAnual")
-                .document("Total");
-
-        documentReferenceEntradasAnual.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> taskAnual) {
-                DocumentSnapshot documentSnapshotEntradasAnual = taskAnual.getResult();
-                String str = formatPriceSave(binding.editNovoValor.getText().toString());
-                Double valorCV = Double.parseDouble(str);
-
-                if (documentSnapshotEntradasAnual.contains("ResultadoTotalEntradaAnual")){
-                    Double ValorAnual = Double.parseDouble(documentSnapshotEntradasAnual.getString("ResultadoTotalEntradaAnual"));
-                    Double somaEntrada = ValorAnual + valorCV;
-
-                    String SomaEntradaCv = String.valueOf(somaEntrada);
-
-                    Map<String, Object> ValorTotalAnual = new HashMap<>();
-                    ValorTotalAnual.put("ResultadoTotalEntradaAnual", SomaEntradaCv);
-
-                    db.collection(usuarioID).document(ano).collection("ResumoAnual").document("entradas").collection("TotalEntradaAnual")
-                            .document("Total").set(ValorTotalAnual).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
-
-
-                }else {
-                    String ValorCvString = String.valueOf(valorCV);
-
-                    Map<String, Object> ValorTotalAnual = new HashMap<>();
-                    ValorTotalAnual.put("ResultadoTotalEntradaAnual", ValorCvString);
-
-                    db.collection(usuarioID).document(ano).collection("ResumoAnual").document("entradas").collection("TotalEntradaAnual")
-                            .document("Total").set(ValorTotalAnual).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            });
-                }
-
-
-            }
-        });
-    }
     public void EnviarTotalContasReceber(){
         String mes = binding.addData2.getText().toString();
         String ano = binding.addData3.getText().toString();
@@ -462,8 +280,8 @@ public class NovasContasAreceber extends AppCompatActivity {
         usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         //document reference total Contas À receber
-        DocumentReference documentReferenceC = db.collection(usuarioID).document(ano).collection(mes).document("entradas")
-                .collection("Total Contas A Receber").document("Total");
+        DocumentReference documentReferenceC = db.collection(usuarioID).document("ContasAreceber")
+                .collection("TotalContasAReceber").document("Total");
 
         documentReferenceC.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
@@ -481,8 +299,8 @@ public class NovasContasAreceber extends AppCompatActivity {
                     Map<String, Object> valorTotalC = new HashMap<>();
                     valorTotalC.put("ResultadoDaSomaEntradaC", SomaEntradaCv);
 
-                    db.collection(usuarioID).document(ano).collection(mes).document("entradas")
-                            .collection("Total Contas A Receber").document("Total").set(valorTotalC).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    db.collection(usuarioID).document("ContasAreceber")
+                            .collection("TotalContasAReceber").document("Total").set(valorTotalC).addOnCompleteListener(new OnCompleteListener<Void>() {
                                 @Override
                                 public void onComplete(@NonNull Task<Void> task) {
 
@@ -499,8 +317,8 @@ public class NovasContasAreceber extends AppCompatActivity {
                     Map<String, Object> valorTotalC = new HashMap<>();
                     valorTotalC.put("ResultadoDaSomaEntradaC", ValorCvString);
 
-                    db.collection(usuarioID).document(ano).collection(mes).document("entradas")
-                            .collection("Total Contas A Receber").document("Total").set(valorTotalC).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    db.collection(usuarioID).document("ContasAreceber")
+                            .collection("TotalContasAReceber").document("Total").set(valorTotalC).addOnCompleteListener(new OnCompleteListener<Void>() {
                                 @Override
                                 public void onComplete(@NonNull Task<Void> task) {
 
@@ -530,7 +348,6 @@ public class NovasContasAreceber extends AppCompatActivity {
         String ValorEntradaDouble = String.valueOf(ValorEntrada);
         String dataEntrada = dia + mes + ano;
         String formaPagament = binding.autoCompleteTextForm.getText().toString();
-        String formaPagamento = "Entrada realizada por " + formaPagament;
         String id = UUID.randomUUID().toString();
 
 
@@ -544,11 +361,10 @@ public class NovasContasAreceber extends AppCompatActivity {
         contasAreceber.put("TipoDeEntrada", DadosEntrada);
         contasAreceber.put("id", id);
         contasAreceber.put("dataVencimento", dataVencimento);
-        contasAreceber.put("formPagamento", formaPagamento);
+        contasAreceber.put("formPagamento", formaPagament);
         contasAreceber.put("idMovimentacao", idMovimentacao);
 
-        DocumentReference documentReferenceContasAreceber = db.collection(usuarioID).document(ano).collection(mes).document("entradas")
-                .collection("ContasAreceber").document(id);
+        DocumentReference documentReferenceContasAreceber = db.collection(usuarioID).document("ContasAreceber").collection("dados").document(id);
 
 
             documentReferenceContasAreceber.set(contasAreceber).addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -585,6 +401,7 @@ public class NovasContasAreceber extends AppCompatActivity {
         } catch (ParseException e) {
             e.printStackTrace();
             Toast.makeText(this, "Formato de data inválido", Toast.LENGTH_SHORT).show();
+            return;
         }
 
 
@@ -604,12 +421,9 @@ public class NovasContasAreceber extends AppCompatActivity {
         int requestCode = Integer.parseInt(binding.idMotimentacao.getText().toString()); // ID único para o PendingIntent
         // int uniqueId = (int) System.currentTimeMillis();
 
-        int flags;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
-        } else {
-            flags = PendingIntent.FLAG_UPDATE_CURRENT;
-        }
+        int flags = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) ?
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE :
+                PendingIntent.FLAG_UPDATE_CURRENT;
 
         PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), requestCode, intent, flags);
 
@@ -618,10 +432,10 @@ public class NovasContasAreceber extends AppCompatActivity {
         if (alarmManager != null) {
             alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
             Toast.makeText(NovasContasAreceber.this, "Notificação agendada com sucesso", Toast.LENGTH_SHORT).show();
-            finish();
+
         } else {
             Toast.makeText(NovasContasAreceber.this, "Falha ao agendar a notificação", Toast.LENGTH_SHORT).show();
-            finish();
+
         }
 
     }
@@ -693,5 +507,23 @@ public class NovasContasAreceber extends AppCompatActivity {
         String minuto = String.valueOf(calendar.get(Calendar.MINUTE));
         String segundo = String.valueOf(calendar.get(Calendar.SECOND));
         binding.horaContasApagar.setText(hora +":" + minuto);
+    }
+    public void OuvinteRadioGroup(){
+        binding.radioGroup1.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @SuppressLint("NonConstantResourceId")
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                // checkedId é o ID do RadioButton selecionado no RadioGroup
+                switch (checkedId) {
+                    case R.id.checksSim:
+                        binding.date.setVisibility(View.VISIBLE);
+                        break;
+                    case R.id.checksNao:
+                        binding.date.setVisibility(View.GONE);
+                        break;
+                    // Adicione casos para outros RadioButtons, se necessário
+                }
+            }
+        });
     }
 }

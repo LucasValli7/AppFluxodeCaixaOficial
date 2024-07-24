@@ -1,10 +1,13 @@
 package br.com.lucas.valli.fluxodecaixa.Atividades;
 
+import static br.com.lucas.valli.fluxodecaixa.Classes.ConversorDeMoeda.formatPriceSave;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.viewpager.widget.ViewPager;
 
 import android.app.Activity;
@@ -15,12 +18,17 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.ads.AdError;
@@ -45,15 +53,20 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import br.com.lucas.valli.fluxodecaixa.Adapter.ViewPagerAdapter;
+import br.com.lucas.valli.fluxodecaixa.Classes.ConversorDeMoeda;
 import br.com.lucas.valli.fluxodecaixa.FragmentActivity.FragmentContasAPagar;
 import br.com.lucas.valli.fluxodecaixa.FragmentActivity.FragmentContasAReceber;
 import br.com.lucas.valli.fluxodecaixa.FragmentActivity.FragmentResumeAnual;
 import br.com.lucas.valli.fluxodecaixa.FragmentActivity.FragmentResumeDiario;
 import br.com.lucas.valli.fluxodecaixa.FragmentActivity.FragmentResumeMensal;
+import br.com.lucas.valli.fluxodecaixa.Model.DadosEntrada;
 import br.com.lucas.valli.fluxodecaixa.R;
+import br.com.lucas.valli.fluxodecaixa.RecyclerItemClickListener.RecyclerItemClickListener;
 import br.com.lucas.valli.fluxodecaixa.databinding.ActivityTelaPrincipalBinding;
 
 public class TelaPrincipal extends AppCompatActivity {
@@ -96,9 +109,133 @@ public class TelaPrincipal extends AppCompatActivity {
         AtivarPagerViewCp();
         TelaPrincipal.verificarEAbrirConfiguracoesDeNotificacoes(this);
 
+        binding.swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refreshData();
+            }
+        });
+        binding.container2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                // Infla o layout personalizado
+                LayoutInflater inflater = getLayoutInflater();
+                View dialogView = inflater.inflate(R.layout.dialog_editar_resumo, null);
+                EditText txt_valor = dialogView.findViewById(R.id.edit_valorEntrada);
+                String valorAtual = binding.txtValorLiquido.getText().toString();
+                txt_valor.setHint(valorAtual);
+                // Adiciona o TextWatcher ao TextView
+                if (txt_valor != null) {
+                    txt_valor.addTextChangedListener(new ConversorDeMoeda(dialogView.findViewById(R.id.edit_valorEntrada)));
+                } else {
+                    Log.e("TAG", "TextView é nulo");
+                }
+
+
+                // Cria e mostra o AlertDialog
+                androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(TelaPrincipal.this);
+                builder.setView(dialogView)
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                                ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                                NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+                                if (networkInfo == null){
+                                    Log.d("NETCONEX", "SEM INTERNET");
+                                    binding.progressBar.setVisibility(View.VISIBLE);
+                                    Toast.makeText(TelaPrincipal.this, "Verifique sua conexão com a Internet", Toast.LENGTH_SHORT).show();
+
+                                }else {
+
+                                    DocumentReference documentReferenceResumoEntrada = db.collection(usuarioID).document("resumoCaixa").collection("ResumoDeCaixa").document("entradas").collection("total")
+                                            .document("ResumoTotal");
+
+                                    DocumentReference documentReferenceResumoSaida = db.collection(usuarioID).document("resumoCaixa").collection("ResumoDeCaixa").document("saidas").collection("total")
+                                            .document("ResumoTotal");
+
+                                    documentReferenceResumoEntrada.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<DocumentSnapshot> taskEntrada) {
+                                            documentReferenceResumoSaida.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<DocumentSnapshot> taskSaida) {
+                                                    DocumentSnapshot documentSnapshotEntrada = taskEntrada.getResult();
+                                                    DocumentSnapshot documentSnapshotSaida = taskSaida.getResult();
+
+                                                    String txt_valorString = String.valueOf(txt_valor.getText());
+                                                    String str = formatPriceSave(txt_valorString);
+
+                                                    String vazioString = String.valueOf(vazio);
+
+                                                    if (documentSnapshotEntrada.contains("ResultadoTotal")) {
+                                                        documentReferenceResumoEntrada.update("ResultadoTotal", str);
+                                                        if (documentSnapshotSaida.contains("ResultadoTotal")) {
+                                                            documentReferenceResumoSaida.update("ResultadoTotal", vazioString);
+                                                        }
+                                                    } else if (!documentSnapshotEntrada.contains("ResultadoTotal")) {
+                                                        //document reference ResumoAnual
+                                                        DocumentReference documentReference = db.collection(usuarioID).document("resumoCaixa").collection("ResumoDeCaixa").document("entradas").collection("total")
+                                                                .document("ResumoTotal");
+
+                                                        documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                            @Override
+                                                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                                                DocumentSnapshot documentSnapshot= task.getResult();
+                                                                Double ValorCv = Double.parseDouble(str);
+
+                                                                if (documentSnapshot.contains("ResultadoTotal")){
+                                                                    Double ValorDiario = Double.parseDouble(documentSnapshot.getString("ResultadoTotal"));
+                                                                    Double SomaSaida = ValorDiario + ValorCv;
+                                                                    String SomaSaidaCv = String.valueOf(SomaSaida);
+
+                                                                    //HasMap total
+                                                                    Map<String, Object> valorTotal = new HashMap<>();
+                                                                    valorTotal.put("ResultadoTotal", SomaSaidaCv);
+
+                                                                    documentReference.set(valorTotal);
+
+                                                                }else {
+                                                                    String ValorStringCv = String.valueOf(ValorCv);
+                                                                    //HasMap total
+                                                                    Map<String, Object> valorTotal = new HashMap<>();
+                                                                    valorTotal.put("ResultadoTotal", ValorStringCv);
+
+                                                                    documentReference.set(valorTotal);
+
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
+
+
+                                }
+
+
+
+                            }
+                        })
+                        .setNegativeButton("Cancelar", null);
+                binding.progressBar.setVisibility(View.GONE);
+
+                androidx.appcompat.app.AlertDialog dialog = builder.create();
+                dialog.show();
+            }
+        });
+
     }
 
-
+    private void refreshData() {
+        new Handler().postDelayed(() -> {
+            checkConnection();
+            binding.swipeRefreshLayout.setRefreshing(false);
+        }, 1000); // Simula um delay de 1 segundos
+    }
 
     public static void verificarEAbrirConfiguracoesDeNotificacoes(Context context) {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -192,12 +329,12 @@ public class TelaPrincipal extends AppCompatActivity {
         usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         //document reference total Geral
-        DocumentReference documentReferenceAnualSaidas = db.collection(usuarioID).document(ano).collection("ResumoAnual").document("saidas").collection("TotalSaidaAnual")
-                .document("Total");
+        DocumentReference documentReferenceAnualSaidas = db.collection(usuarioID).document("resumoCaixa").collection("ResumoDeCaixa").document("saidas").collection("total")
+                .document("ResumoTotal");
 
         //document reference total Entradas
-        DocumentReference documentReferenceAnualEntradas = db.collection(usuarioID).document(ano).collection("ResumoAnual").document("entradas").collection("TotalEntradaAnual")
-                .document("Total");
+        DocumentReference documentReferenceAnualEntradas = db.collection(usuarioID).document("resumoCaixa").collection("ResumoDeCaixa").document("entradas").collection("total")
+                .document("ResumoTotal");
 
         documentReferenceAnualSaidas.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
@@ -215,20 +352,20 @@ public class TelaPrincipal extends AppCompatActivity {
                                 binding.txtValorLiquido.setText(valorConvertido);
 
                             } else if (!documentSnapshotEntradasAnual.exists() && documentSnapshotAnualSaidas.exists()) {
-                                Double SomaSaida = Double.parseDouble(documentSnapshotAnualSaidas.getString("ResultadoTotalSaidaAnual"));
+                                Double SomaSaida = Double.parseDouble(documentSnapshotAnualSaidas.getString("ResultadoTotal"));
                                 Double op = vazio - SomaSaida;
                                 binding.txtValorLiquido.setTextColor(getResources().getColor(R.color.red));
                                 String valorConvertido = NumberFormat.getCurrencyInstance(ptBr).format(op);
                                 binding.txtValorLiquido.setText(valorConvertido);
 
                             } else if (documentSnapshotEntradasAnual.exists() && !documentSnapshotAnualSaidas.exists()) {
-                                Double SomaEntrada = Double.parseDouble(documentSnapshotEntradasAnual.getString("ResultadoTotalEntradaAnual"));
+                                Double SomaEntrada = Double.parseDouble(documentSnapshotEntradasAnual.getString("ResultadoTotal"));
                                 String valorCv = NumberFormat.getCurrencyInstance(ptBr).format(SomaEntrada);
                                 binding.txtValorLiquido.setText(valorCv);
 
                             } else if (documentSnapshotEntradasAnual.exists() && documentSnapshotAnualSaidas.exists()){
-                                Double SomaEntrada = Double.parseDouble(documentSnapshotEntradasAnual.getString("ResultadoTotalEntradaAnual"));
-                                Double SomaSaida = Double.parseDouble(documentSnapshotAnualSaidas.getString("ResultadoTotalSaidaAnual"));
+                                Double SomaEntrada = Double.parseDouble(documentSnapshotEntradasAnual.getString("ResultadoTotal"));
+                                Double SomaSaida = Double.parseDouble(documentSnapshotAnualSaidas.getString("ResultadoTotal"));
 
                                 // operação com os totais
                                 if (SomaEntrada < SomaSaida){
@@ -417,77 +554,5 @@ public class TelaPrincipal extends AppCompatActivity {
         super.onPause();
         closeDrawer(binding.drawerLayout);
     }
-    public void Initialize(){
-        MobileAds.initialize(this, new OnInitializationCompleteListener() {
-            @Override
-            public void onInitializationComplete(InitializationStatus initializationStatus) {
-            }
-        });
-        LoadInterticialAd();
-    }
-    public void LoadInterticialAd(){
-        AdRequest adRequest = new AdRequest.Builder().build();
 
-        InterstitialAd.load(this,String.valueOf("ca-app-pub-3940256099942544/1033173712"), adRequest,
-                new InterstitialAdLoadCallback() {
-                    @Override
-                    public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
-                        // The mInterstitialAd reference will be null until
-                        // an ad is loaded.
-                        ShowIntesticial();
-                        mInterstitialAd = interstitialAd;
-                        mInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback(){
-                            @Override
-                            public void onAdClicked() {
-                                // Called when a click is recorded for an ad.
-                                Log.d("ADSTESTE", "Ad was clicked.");
-                            }
-
-                            @Override
-                            public void onAdDismissedFullScreenContent() {
-                                // Called when ad is dismissed.
-                                // Set the ad reference to null so you don't show the ad a second time.
-                                Log.d("ADSTESTE", "Ad dismissed fullscreen content.");
-                                mInterstitialAd = null;
-                            }
-
-                            @Override
-                            public void onAdFailedToShowFullScreenContent(AdError adError) {
-                                // Called when ad fails to show.
-                                Log.e("ADSTESTE", "Ad failed to show fullscreen content.");
-                                mInterstitialAd = null;
-                            }
-
-                            @Override
-                            public void onAdImpression() {
-                                // Called when an impression is recorded for an ad.
-                                Log.d("ADSTESTE", "Ad recorded an impression.");
-                            }
-
-                            @Override
-                            public void onAdShowedFullScreenContent() {
-                                // Called when ad is shown.
-                                Log.d("ADSTESTE", "Ad showed fullscreen content.");
-                            }
-                        });
-                        Log.i("ADSTESTE", "onAdLoaded");
-                    }
-
-                    @Override
-                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                        // Handle the error
-                        Log.d("ADSTESTE", loadAdError.toString());
-                        mInterstitialAd = null;
-                    }
-                });
-
-
-    }
-    public void ShowIntesticial(){
-        if (mInterstitialAd != null) {
-            mInterstitialAd.show(TelaPrincipal.this);
-        } else {
-            Log.d("ADSTESTE", "The interstitial ad wasn't ready yet.");
-        }
-    }
 }

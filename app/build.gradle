@@ -12,7 +12,7 @@ android {
         applicationId "br.com.lucas.valli.fluxodecaixa"
         minSdk 24
         targetSdk 34
-        versionCode 5
+        versionCode 6
         versionName "1.0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -46,11 +46,11 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-process:2.7.0'
     implementation 'androidx.activity:activity:1.9.0'
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.2.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
 
 
-    implementation platform('com.google.firebase:firebase-bom:33.1.1')
+    implementation platform('com.google.firebase:firebase-bom:33.1.2')
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-firestore'
     implementation 'com.google.firebase:firebase-messaging:24.0.0'
@@ -66,10 +66,12 @@ dependencies {
     implementation 'com.github.tsuryo:Swipeable-RecyclerView:1.1'
     implementation 'it.xabaras.android:recyclerview-swipedecorator:1.4'
 
-    implementation("com.google.android.gms:play-services-ads:23.1.0")
+    implementation("com.google.android.gms:play-services-ads:23.2.0")
 
 
     implementation "androidx.work:work-runtime-ktx:2.9.0"
+
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
 
 
 

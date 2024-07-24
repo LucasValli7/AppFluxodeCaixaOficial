@@ -1,5 +1,7 @@
 package br.com.lucas.valli.fluxodecaixa.Atividades;
 
+import static br.com.lucas.valli.fluxodecaixa.Classes.ConversorDeMoeda.formatPriceSave;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -7,7 +9,9 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
@@ -19,12 +23,15 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -41,6 +48,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -51,8 +59,11 @@ import java.util.Map;
 import java.util.UUID;
 
 import br.com.lucas.valli.fluxodecaixa.Adapter.AdapterContasApagar;
+import br.com.lucas.valli.fluxodecaixa.Classes.AlarmPagar;
 import br.com.lucas.valli.fluxodecaixa.Classes.AlarmReceber;
+import br.com.lucas.valli.fluxodecaixa.Classes.ConversorDeMoeda;
 import br.com.lucas.valli.fluxodecaixa.Model.ContasApagar;
+import br.com.lucas.valli.fluxodecaixa.Model.ContasAreceber;
 import br.com.lucas.valli.fluxodecaixa.R;
 import br.com.lucas.valli.fluxodecaixa.RecyclerItemClickListener.RecyclerItemClickListener;
 import br.com.lucas.valli.fluxodecaixa.databinding.ActivityContasApagarBinding;
@@ -69,13 +80,8 @@ public class ContasAPagar extends AppCompatActivity {
     private final String mes = new SimpleDateFormat("MM", new Locale("pt", "BR")).format(x);
     private final String ano = new SimpleDateFormat("yyyy", new Locale("pt", "BR")).format(x);
     private final String dia = new SimpleDateFormat("dd", new Locale("pt", "BR")).format(x);
-    private String testeData = dia + mes + ano;
     Locale ptbr = new Locale("pt", "BR");
     private Double vazio = Double.parseDouble("0.00");
-    AutoCompleteTextView autoCompleteTextView;
-    ArrayAdapter<String> adapterItem;
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +95,8 @@ public class ContasAPagar extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-        binding.listaContasAPagar.addOnItemTouchListener(new RecyclerItemClickListener(getApplicationContext(), binding.listaContasAPagar, new RecyclerItemClickListener.OnItemClickListener() {
+        binding.listaContasAPagar.addOnItemTouchListener(new RecyclerItemClickListener(getApplicationContext(),
+                binding.listaContasAPagar, new RecyclerItemClickListener.OnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
 
@@ -97,70 +104,272 @@ public class ContasAPagar extends AppCompatActivity {
 
             @Override
             public void onLongItemClick(View view, int position) {
-                /*AlertDialog.Builder builder = new AlertDialog.Builder(ContasAPagar.this);
-                builder.setTitle("Atenção");
-                builder.setMessage("deseja desativar o lembrete?");
-                builder.setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
+
+
+
+                ContasApagar item = contasApagar.get(position);
+                binding.progressBar.setVisibility(View.VISIBLE);
+
+                // Infla o layout personalizado
+                LayoutInflater inflater = getLayoutInflater();
+               View dialogView = inflater.inflate(R.layout.dialog_editar_p, null);
+                EditText txt_tipo = dialogView.findViewById(R.id.edit_tipoSaida);
+                EditText txt_valor = dialogView.findViewById(R.id.edit_valorSaida);
+                EditText txt_formPagamento = dialogView.findViewById(R.id.form_pagament);
+                ImageView img_relogio = dialogView.findViewById(R.id.img_relogio);
+
+                DocumentReference documentReferenceAlarm = db.collection(usuarioID).document("ContasApagar").collection("dados")
+                        .document(item.getId());
+
+                documentReferenceAlarm.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        binding.progressBar.setVisibility(View.VISIBLE);
-                        Date x = new Date();
-                        String mes = new SimpleDateFormat("MM", new Locale("pt", "BR")).format(x);
-                        String ano = new SimpleDateFormat("yyyy", new Locale("pt", "BR")).format(x);
-                        ContasApagar item = contasApagar.get(position);
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                        DocumentSnapshot documentSnapshot = task.getResult();
+                        if (documentSnapshot.contains("TipoDeSaida") && documentSnapshot.contains("ValorDeSaida")
+                                && documentSnapshot.contains("dataDeSaida")){
 
-                        DocumentReference documentReference = db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("ContasApagar")
-                                .document(item.getId());
+                            String idMovimentacao = documentSnapshot.getString("idMovimentacao");
+                            String dataVencimento = documentSnapshot.getString("dataVencimento");
+                            int requestCode = Integer.parseInt(idMovimentacao); // O mesmo requestCode usado ao configurar o alarme
+                            Intent intent = new Intent(getApplicationContext(), AlarmPagar.class);
+                            intent.putExtra("notification_text", "Seu texto de notificação aqui"); // Deve corresponder ao Intent usado originalmente
 
-                        documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                            int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                flags |= PendingIntent.FLAG_IMMUTABLE;
+                            }
+
+                            // Formato da data
+                            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                            
+
+                            try {
+                                // Converter string para Date
+                                Date dataAlvo = sdf.parse(dataVencimento);
+
+                                // Data atual
+                                Date dataAtual = new Date();
+                                dataAtual = sdf.parse(sdf.format(dataAtual));
+
+                                // Verificar se a data alvo já passou
+                                if (dataAlvo.before(dataAtual)) {
+                                    System.out.println("A data já passou.");
+                                    img_relogio.setImageResource(R.drawable.ic_alarm_disabled);
+                                    
+                                } else if (dataAlvo.equals(dataAtual)) {
+                                    System.out.println("A data é hoje.");
+                                    img_relogio.setImageResource(R.drawable.ic_alarm_activated);
+                                } else{
+                                    System.out.println("A data ainda não passou.");
+                                    img_relogio.setImageResource(R.drawable.ic_alarm_activated);
+                                }
+                            } catch (ParseException e) {
+                                System.out.println("Formato de data inválido.");
+                            }
+
+
+
+
+
+                        }
+                    }
+                });
+                
+
+                Spinner txt_categoria = dialogView.findViewById(R.id.spinner_categoria);
+
+                ArrayAdapter<CharSequence> categoryAdapter = ArrayAdapter.createFromResource(ContasAPagar.this,
+                        R.array.category_array, android.R.layout.simple_spinner_item);
+                categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                txt_categoria.setAdapter(categoryAdapter);
+
+                DocumentReference documentReference = db.collection(usuarioID).document("ContasApagar").collection("dados")
+                        .document(item.getId());
+
+
+
+                // Adiciona o TextWatcher ao TextView
+                if (txt_valor != null) {
+                    txt_valor.addTextChangedListener(new ConversorDeMoeda(dialogView.findViewById(R.id.edit_valorSaida)));
+                } else {
+                    Log.e("TAG", "TextView é nulo");
+                }
+
+                documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                        DocumentSnapshot documentSnapshot = task.getResult();
+
+                        if (documentSnapshot.contains("TipoDeSaida") && documentSnapshot.contains("ValorDeSaida")
+                                && documentSnapshot.contains("dataDeSaida")) {
+
+                            String valorSaida = documentSnapshot.getString("ValorDeSaida");
+                            String dataSaida = documentSnapshot.getString("dataDeSaida");
+                            String valorSaidaDouble = documentSnapshot.getString("ValorDeSaidaDouble");
+                            String TipoDeSaida = documentSnapshot.getString("TipoDeSaida");
+                            String formaPagamento = documentSnapshot.getString("formPagamento");
+                            String idMovimentacao = documentSnapshot.getString("idMovimentacao");
+                            String categoria = documentSnapshot.getString("categoria");
+
+                            txt_tipo.setText(TipoDeSaida);
+                            txt_valor.setText(valorSaida);
+                            txt_formPagamento.setText(formaPagamento);
+
+                            if (categoria.equals("Gastos Essenciais")){
+                                txt_categoria.setSelection(0);
+                            } else if (categoria.equals("Pagamento de Dívidas")) {
+                                txt_categoria.setSelection(1);
+                            }else if (categoria.equals("Desejos Pessoais")) {
+                                txt_categoria.setSelection(2);
+                            }
+
+
+                        }
+                    }
+                });
+
+
+                // Cria e mostra o AlertDialog
+                androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(ContasAPagar.this);
+                builder.setView(dialogView)
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                             @Override
-                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                                DocumentSnapshot documentSnapshot = task.getResult();
-                                if (documentSnapshot.contains("TipoDeSaida") && documentSnapshot.contains("ValorDeSaida")
-                                        && documentSnapshot.contains("dataDeSaida")){
+                            public void onClick(DialogInterface dialog, int which) {
 
-                                    String idMovimentacao = documentSnapshot.getString("idMovimentacao");
-                                    int requestCode = Integer.parseInt(idMovimentacao); // O mesmo requestCode usado ao configurar o alarme
-                                    Intent intent = new Intent(getApplicationContext(), AlarmPagar.class);
-                                    intent.putExtra("notification_text", "Seu texto de notificação aqui"); // Deve corresponder ao Intent usado originalmente
+                                ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                                NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+                                if (networkInfo == null){
+                                    Log.d("NETCONEX", "SEM INTERNET");
+                                    binding.progressBar.setVisibility(View.VISIBLE);
+                                    Toast.makeText(ContasAPagar.this, "Verifique sua conexão com a Internet", Toast.LENGTH_SHORT).show();
 
-                                    int flags = PendingIntent.FLAG_UPDATE_CURRENT;
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                        flags |= PendingIntent.FLAG_IMMUTABLE;
-                                    }
-
-                                    PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), requestCode, intent, flags);
-
-                                    AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                                    if (alarmManager != null) {
-                                        alarmManager.cancel(pendingIntent);
-                                        Toast.makeText(ContasAPagar.this, "Alarme desativado com sucesso", Toast.LENGTH_SHORT).show();
-                                        binding.progressBar.setVisibility(View.GONE);
-
-                                    } else {
-                                        Toast.makeText(ContasAPagar.this, "Falha ao desativar o alarme", Toast.LENGTH_SHORT).show();
-                                    }
+                                }else {
 
 
+
+                                    DocumentReference documentReferenceTotal = db.collection(usuarioID).document("ContasApagar")
+                                            .collection("TotalContasAPagar").document("Total");
+
+                                    documentReferenceTotal.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<DocumentSnapshot> taskTotal) {
+                                            documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                                    DocumentSnapshot documentSnapshot = task.getResult();
+                                                    DocumentSnapshot documentSnapshotTotal = taskTotal.getResult();
+                                                    if (documentSnapshot.contains("TipoDeSaida") && documentSnapshot.contains("ValorDeSaida")
+                                                            && documentSnapshot.contains("dataDeSaida")) {
+
+                                                        String valorSaida = documentSnapshot.getString("ValorDeSaida");
+                                                        String dataSaida = documentSnapshot.getString("dataDeSaida");
+                                                        String valorSaidaDouble = documentSnapshot.getString("ValorDeSaidaDouble");
+                                                        String TipoDeSaida = documentSnapshot.getString("TipoDeSaida");
+                                                        String formaPagamento = documentSnapshot.getString("formPagamento");
+                                                        String idMovimentacao = documentSnapshot.getString("idMovimentacao");
+                                                        String categoria = documentSnapshot.getString("categoria");
+
+                                                        //texto campos dialogoCustom
+                                                        String txt_tipoString =String.valueOf(txt_tipo.getText());
+                                                        String txt_valorString =String.valueOf(txt_valor.getText());
+                                                        String txt_formPagamentoString =String.valueOf(txt_formPagamento.getText());
+
+
+                                                        //entradas convertidas para Double
+                                                        String str = formatPriceSave(txt_valorString);
+                                                        Double valorDoubleEditText = Double.parseDouble(str);
+                                                        Double valorDoubleDb = Double.parseDouble(valorSaidaDouble);
+                                                        String txt_category = txt_categoria.getSelectedItem().toString();
+
+                                                        //mesmo valor double para String
+                                                        String txt_valor = String.valueOf(valorDoubleEditText);
+
+                                                        //converter formato moeda
+                                                        String ValorSaidaConvertido = NumberFormat.getCurrencyInstance(ptbr).format(valorDoubleEditText);
+
+                                                        Log.d("PAGAMENTOOK", txt_tipoString + "\n" + valorDoubleDb + "\n" +txt_formPagamentoString);
+
+                                                        if (!txt_tipoString.isEmpty() && !txt_valor.isEmpty()
+                                                                && !txt_formPagamentoString.isEmpty() && !txt_category.isEmpty()) {
+
+
+                                                            if (!txt_tipoString.equals(TipoDeSaida)) {
+                                                                db.collection(usuarioID).document("ContasApagar").collection("dados")
+                                                                        .document(item.getId()).update("TipoDeSaida", txt_tipoString);
+                                                            }
+
+                                                            if (!txt_valor.equals(valorSaidaDouble)) {
+
+                                                                if (valorDoubleEditText < valorDoubleDb) {
+                                                                    Double op = valorDoubleDb - valorDoubleEditText;
+
+                                                                    if (documentSnapshotTotal.contains("ResultadoDaSomaSaidaC")) {
+                                                                        Double valorTotal = Double.parseDouble(documentSnapshotTotal.getString("ResultadoDaSomaSaidaC"));
+                                                                        Double op2 = valorTotal - op;
+                                                                        db.collection(usuarioID).document("ContasApagar")
+                                                                                .collection("TotalContasAPagar").document("Total").update("ResultadoDaSomaSaidaC",
+                                                                                        String.valueOf(op2));
+
+                                                                        db.collection(usuarioID).document("ContasApagar").collection("dados")
+                                                                                .document(item.getId()).update("ValorDeSaida", ValorSaidaConvertido, "ValorDeSaidaDouble", txt_valor);
+                                                                    }
+
+                                                                } else if (valorDoubleEditText > valorDoubleDb) {
+                                                                    Double op = valorDoubleEditText - valorDoubleDb;
+
+                                                                    if (documentSnapshotTotal.contains("ResultadoDaSomaSaidaC")) {
+                                                                        Double valorTotal = Double.parseDouble(documentSnapshotTotal.getString("ResultadoDaSomaSaidaC"));
+                                                                        Double op2 = op + valorTotal;
+
+                                                                        db.collection(usuarioID).document("ContasApagar")
+                                                                                .collection("TotalContasAPagar").document("Total").update("ResultadoDaSomaSaidaC",
+                                                                                        String.valueOf(op2));
+
+                                                                        db.collection(usuarioID).document("ContasApagar").collection("dados")
+                                                                                .document(item.getId()).update("ValorDeSaida", ValorSaidaConvertido, "ValorDeSaidaDouble", txt_valor);
+
+                                                                    }
+                                                                }
+
+                                                            }
+
+
+                                                            if (!txt_formPagamentoString.equals(formaPagamento)) {
+                                                                db.collection(usuarioID).document("ContasApagar").collection("dados")
+                                                                        .document(item.getId()).update("formPagamento", txt_formPagamentoString);
+                                                            }
+
+
+                                                            if (!txt_category.equals(categoria)) {
+                                                                db.collection(usuarioID).document("ContasApagar").collection("dados")
+                                                                        .document(item.getId()).update("categoria", txt_category);
+                                                            }
+
+                                                            onStart();
+                                                        }else {
+                                                            Toast.makeText(ContasAPagar.this, "Preencha todos os campos", Toast.LENGTH_LONG).show();
+                                                        }
+
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
 
 
 
 
                                 }
+
+
+
                             }
-                        });
+                        })
+                        .setNegativeButton("Cancelar", null);
+                binding.progressBar.setVisibility(View.GONE);
 
-                    }
-                });
-                builder.setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-
-                    }
-                });
-                builder.show();*/
-                customDialogEditar();
+                androidx.appcompat.app.AlertDialog dialog = builder.create();
+                dialog.show();
             }
 
             @Override
@@ -175,58 +384,8 @@ public class ContasAPagar extends AppCompatActivity {
             }
         });
 
-    }
-    public void BtnPesquisar(){
-        binding.btnPesquisa.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showCustomDialog();
-            }
-        });
-    }
-
-    private void customDialogEditar(){
-        // Infla o layout personalizado
-        LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_editar_p, null);
 
 
-        // Configura o Spinner de tipo
-        Spinner categorySpinner = dialogView.findViewById(R.id.category_spinner);
-        ArrayAdapter<CharSequence> categoryAdapter = ArrayAdapter.createFromResource(this,
-                R.array.category_array, android.R.layout.simple_spinner_item);
-        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        categorySpinner.setAdapter(categoryAdapter);
-
-
-        // Cria e mostra o AlertDialog
-        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
-        builder.setView(dialogView)
-                .setTitle("Editar lançamento")
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-                        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-                        if (networkInfo == null){
-                            Log.d("NETCONEX", "SEM INTERNET");
-                            Toast.makeText(ContasAPagar.this, "Verifique sua conexão com a Internet", Toast.LENGTH_SHORT).show();
-
-                        }else {
-
-
-                        }
-
-
-
-                    }
-                })
-                .setNegativeButton("Cancelar", null);
-        binding.progressBar.setVisibility(View.GONE);
-
-        androidx.appcompat.app.AlertDialog dialog = builder.create();
-        dialog.show();
     }
 
     @Override
@@ -234,6 +393,7 @@ public class ContasAPagar extends AppCompatActivity {
         super.onStart();
         checkConnection();
     }
+
     public boolean checkConnection(){
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
@@ -245,7 +405,6 @@ public class ContasAPagar extends AppCompatActivity {
         }else {
             RecuperarDadosContasAPagarI();
             RecuperarTotalContasAPagarI();
-            BtnPesquisar();
             binding.progressBar.setVisibility(View.GONE);
         }
         if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI){
@@ -262,8 +421,8 @@ public class ContasAPagar extends AppCompatActivity {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        DocumentReference documentReference = db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                .collection("Total Contas A Pagar").document("Total");
+        DocumentReference documentReference = db.collection(usuarioID).document("ContasApagar")
+                .collection("TotalContasAPagar").document("Total");
         documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
@@ -292,7 +451,7 @@ public class ContasAPagar extends AppCompatActivity {
 
         usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
         db = FirebaseFirestore.getInstance();
-        db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("ContasApagar")
+        db.collection(usuarioID).document("ContasApagar").collection("dados")
                 .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
@@ -320,16 +479,17 @@ public class ContasAPagar extends AppCompatActivity {
                                         AlertDialog.Builder builder = new AlertDialog.Builder(ContasAPagar.this);
                                         builder.setTitle("Atenção");
                                         builder.setMessage("deseja excluir esse item?");
+                                        builder.setCancelable(false);
                                         builder.setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
                                             @Override
                                             public void onClick(DialogInterface dialog, int which) {
                                                 binding.progressBar.setVisibility(View.VISIBLE);
 
                                                 ContasApagar item = contasApagar.get(position);
-                                                DocumentReference documentReferenceCTotal = db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                                                        .collection("Total Contas A Pagar").document("Total");
+                                                DocumentReference documentReferenceCTotal = db.collection(usuarioID).document("ContasApagar")
+                                                        .collection("TotalContasAPagar").document("Total");
 
-                                                DocumentReference documentReferenceC = db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("ContasApagar")
+                                                DocumentReference documentReferenceC = db.collection(usuarioID).document("ContasApagar").collection("dados")
                                                         .document(item.getId());
 
                                                 documentReferenceCTotal.addSnapshotListener(new EventListener<DocumentSnapshot>() {
@@ -349,10 +509,10 @@ public class ContasAPagar extends AppCompatActivity {
 
                                                                     String cv = String.valueOf(operacao);
 
-                                                                    db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                                                                            .collection("Total Contas A Pagar").document("Total").update("ResultadoDaSomaSaidaC", cv);
+                                                                    db.collection(usuarioID).document("ContasApagar")
+                                                                            .collection("TotalContasAPagar").document("Total").update("ResultadoDaSomaSaidaC", cv);
 
-                                                                    db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("ContasApagar")
+                                                                    db.collection(usuarioID).document("ContasApagar").collection("dados")
                                                                             .document(item.getId()).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
                                                                                 @Override
                                                                                 public void onComplete(@NonNull Task<Void> task) {
@@ -390,6 +550,7 @@ public class ContasAPagar extends AppCompatActivity {
                                         AlertDialog.Builder builder = new AlertDialog.Builder(ContasAPagar.this);
                                         builder.setTitle("Atenção");
                                         builder.setMessage("deseja confirmar pagamento?");
+                                        builder.setCancelable(false);
                                         builder.setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
                                             @Override
                                             public void onClick(DialogInterface dialog, int which) {
@@ -397,7 +558,7 @@ public class ContasAPagar extends AppCompatActivity {
 
                                                 ContasApagar item = contasApagar.get(position);
 
-                                                DocumentReference documentReference = db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("ContasApagar")
+                                                DocumentReference documentReference = db.collection(usuarioID).document("ContasApagar").collection("dados")
                                                         .document(item.getId());
 
                                                 documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
@@ -588,6 +749,38 @@ public class ContasAPagar extends AppCompatActivity {
                                                                 }
                                                             });
 
+                                                            //document reference Resumo
+                                                            DocumentReference documentReferenceResumo = db.collection(usuarioID).document("resumoCaixa").collection("ResumoDeCaixa").document("saidas").collection("total")
+                                                                    .document("ResumoTotal");
+
+                                                            documentReferenceResumo.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                @Override
+                                                                public void onComplete(@NonNull Task<DocumentSnapshot> taskResumo) {
+                                                                    DocumentSnapshot documentSnapshotEntradasResumo = taskResumo.getResult();
+                                                                    if (documentSnapshotEntradasResumo.contains("ResultadoTotal")){
+                                                                        Double ValorDiario = Double.parseDouble(documentSnapshotEntradasResumo.getString("ResultadoTotal"));
+                                                                        Log.i("RESUMO", String.valueOf(ValorDiario));
+                                                                        Double SomaSaida = ValorDiario + ValorCv;
+                                                                        String SomaSaidaCv = String.valueOf(SomaSaida);
+                                                                        Log.i("RESUMO", String.valueOf(SomaSaida));
+
+                                                                        //HasMap total
+                                                                        Map<String, Object> valorTotal = new HashMap<>();
+                                                                        valorTotal.put("ResultadoTotal", SomaSaidaCv);
+
+                                                                        documentReferenceResumo.set(valorTotal);
+
+                                                                    }else {
+                                                                        String ValorStringCv = String.valueOf(ValorCv);
+                                                                        //HasMap total
+                                                                        Map<String, Object> valorTotal = new HashMap<>();
+                                                                        valorTotal.put("ResultadoTotal", ValorStringCv);
+
+                                                                        documentReferenceResumo.set(valorTotal);
+                                                                    }
+                                                                }
+                                                            });
+
 
 
 
@@ -753,10 +946,10 @@ public class ContasAPagar extends AppCompatActivity {
                                                                 });
                                                             }
 
-                                                            DocumentReference documentReferenceCTotal = db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                                                                    .collection("Total Contas A Pagar").document("Total");
+                                                            DocumentReference documentReferenceCTotal = db.collection(usuarioID).document("ContasApagar")
+                                                                    .collection("TotalContasAPagar").document("Total");
 
-                                                            DocumentReference documentReferenceC = db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("ContasApagar")
+                                                            DocumentReference documentReferenceC = db.collection(usuarioID).document("ContasApagar").collection("dados")
                                                                     .document(item.getId());
 
                                                             documentReferenceCTotal.addSnapshotListener(new EventListener<DocumentSnapshot>() {
@@ -776,15 +969,15 @@ public class ContasAPagar extends AppCompatActivity {
 
                                                                                 String cv = String.valueOf(operacao);
 
-                                                                                db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                                                                                        .collection("Total Contas A Pagar").document("Total").update("ResultadoDaSomaSaidaC", cv);
+                                                                                db.collection(usuarioID).document("ContasApagar")
+                                                                                        .collection("TotalContasAPagar").document("Total").update("ResultadoDaSomaSaidaC", cv);
 
-                                                                                db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("ContasApagar")
+                                                                                db.collection(usuarioID).document("ContasApagar").collection("dados")
                                                                                         .document(item.getId()).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
                                                                                             @Override
                                                                                             public void onComplete(@NonNull Task<Void> task) {
                                                                                                 if (task.isSuccessful()) {
-                                                                                                    Toast.makeText(getApplicationContext(), "item excluido com sucesso", Toast.LENGTH_LONG).show();
+                                                                                                    Toast.makeText(getApplicationContext(), "Pagamento confirmado!", Toast.LENGTH_LONG).show();
                                                                                                     binding.progressBar.setVisibility(View.GONE);
                                                                                                     contasApagar.remove(viewHolder.getAdapterPosition());
                                                                                                     adapterContasApagar.notifyDataSetChanged();
@@ -868,6 +1061,8 @@ public class ContasAPagar extends AppCompatActivity {
                 R.array.months_array, android.R.layout.simple_spinner_item);
         monthAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         monthSpinner.setAdapter(monthAdapter);
+
+
 
         // Cria e mostra o AlertDialog
         androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
@@ -1196,14 +1391,13 @@ public class ContasAPagar extends AppCompatActivity {
                                                             builder.show();
 
 
-
-
                                                         }
                                                     }
 
                                                     @Override
                                                     public void onChildDraw(Canvas c, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
                                                         RecyclerViewSwipeDecorator.Builder decorator = new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+                                                        Log.d("Swipe", "dX: " + dX);
 
                                                         if (dX > 0) {
                                                             // Swipe para a direita
@@ -1211,15 +1405,20 @@ public class ContasAPagar extends AppCompatActivity {
                                                                     .addSwipeRightActionIcon(R.drawable.ic_pagamento_realizado)
                                                                     .addSwipeRightLabel("Pago")
                                                                     .setSwipeRightLabelColor(ContextCompat.getColor(getApplicationContext(), R.color.white));
+
+
                                                         } else {
                                                             // Swipe para a esquerda
                                                             decorator.addSwipeLeftBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.red))
                                                                     .addSwipeLeftActionIcon(R.drawable.ic_delete)
                                                                     .addSwipeLeftLabel("Excluir")
                                                                     .setSwipeLeftLabelColor(ContextCompat.getColor(getApplicationContext(), R.color.white));
+
                                                         }
 
                                                         decorator.create().decorate();
+                                                        Log.d("Swipe", "dX: " + dX);
+
                                                         super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
                                                     }
                                                 };
@@ -1229,32 +1428,80 @@ public class ContasAPagar extends AppCompatActivity {
                                     }
                                 });
 
+
                     }
                 })
                 .setNegativeButton("Cancelar", null);
 
         androidx.appcompat.app.AlertDialog dialog = builder.create();
         dialog.show();
+
+
     }
-    public void cancelarAlarme() {
-        int requestCode = 12345; // O mesmo requestCode usado ao configurar o alarme
-        Intent intent = new Intent(getApplicationContext(), AlarmReceber.class);
-        intent.putExtra("notification_text_r", "Seu texto de notificação aqui"); // Deve corresponder ao Intent usado originalmente
+    public void cancelarAlarme(int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(ContasAPagar.this);
+                builder.setTitle("Atenção");
+                builder.setMessage("deseja desativar o lembrete?");
+                builder.setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        binding.progressBar.setVisibility(View.VISIBLE);
+                        Date x = new Date();
+                        String mes = new SimpleDateFormat("MM", new Locale("pt", "BR")).format(x);
+                        String ano = new SimpleDateFormat("yyyy", new Locale("pt", "BR")).format(x);
+                        ContasApagar item = contasApagar.get(position);
 
-        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            flags |= PendingIntent.FLAG_IMMUTABLE;
-        }
+                        DocumentReference documentReference = db.collection(usuarioID).document(ano).collection(mes).document("saidas").collection("ContasApagar")
+                                .document(item.getId());
 
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), requestCode, intent, flags);
+                        documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                DocumentSnapshot documentSnapshot = task.getResult();
+                                if (documentSnapshot.contains("TipoDeSaida") && documentSnapshot.contains("ValorDeSaida")
+                                        && documentSnapshot.contains("dataDeSaida")){
 
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        if (alarmManager != null) {
-            alarmManager.cancel(pendingIntent);
-            Toast.makeText(this, "Alarme desativado com sucesso", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "Falha ao desativar o alarme", Toast.LENGTH_SHORT).show();
-        }
+                                    String idMovimentacao = documentSnapshot.getString("idMovimentacao");
+                                    int requestCode = Integer.parseInt(idMovimentacao); // O mesmo requestCode usado ao configurar o alarme
+                                    Intent intent = new Intent(getApplicationContext(), AlarmPagar.class);
+                                    intent.putExtra("notification_text", "Seu texto de notificação aqui"); // Deve corresponder ao Intent usado originalmente
+
+                                    int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                        flags |= PendingIntent.FLAG_IMMUTABLE;
+                                    }
+
+                                    PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), requestCode, intent, flags);
+
+                                    AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                                    if (alarmManager != null) {
+                                        alarmManager.cancel(pendingIntent);
+                                        Toast.makeText(ContasAPagar.this, "Alarme desativado com sucesso", Toast.LENGTH_SHORT).show();
+                                        binding.progressBar.setVisibility(View.GONE);
+
+                                    } else {
+                                        Toast.makeText(ContasAPagar.this, "Falha ao desativar o alarme", Toast.LENGTH_SHORT).show();
+                                    }
+
+
+
+
+
+
+                                }
+                            }
+                        });
+
+                    }
+                });
+                builder.setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+
+                    }
+                });
+                builder.show();
     }
 
 }

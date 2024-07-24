@@ -2,6 +2,7 @@ package br.com.lucas.valli.fluxodecaixa.Atividades;
 
 import static br.com.lucas.valli.fluxodecaixa.Classes.ConversorDeMoeda.formatPriceSave;
 
+import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
 import android.app.PendingIntent;
@@ -20,6 +21,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.DatePicker;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -77,6 +79,7 @@ public class NovasContasApagar extends AppCompatActivity {
         PassarDataAutomatica();
         BtnSalvar();
         Initialize();
+        OuvinteRadioGroup();
 
     }
     @Override
@@ -144,16 +147,22 @@ public class NovasContasApagar extends AppCompatActivity {
                             }
                         });
                 snackbar.show();
-            } else {
+            } else if(binding.checksSim.isChecked() || binding.checksNao.isChecked()){
                 Toast.makeText(NovasContasApagar.this, "Salvo com Sucesso", Toast.LENGTH_SHORT).show();
                 EnviarDadosListaSaidaBD();
                 EnviarTotalContasPagar();
-                String titulo = binding.editNovaSaida.getText().toString();
-                String valor = binding.editNovoValor.getText().toString();
-                AgendarNotificacao("Pagar \" " + titulo + "\" no valor de " + "R$ " + valor);
                 ShowIntesticial();
                 binding.floatingActionButton.setEnabled(false);
                 binding.progressBar.setVisibility(View.GONE);
+
+                if (binding.checksSim.isChecked()) {
+                    String titulo = binding.editNovaSaida.getText().toString();
+                    String valor = binding.editNovoValor.getText().toString();
+                    AgendarNotificacao("Pagar \" " + titulo + "\" no valor de " + "R$ " + valor);
+                }
+                finish();
+            }else {
+                Toast.makeText(this, "Preencha todos os campos", Toast.LENGTH_SHORT).show();
             }
 
         }
@@ -171,6 +180,7 @@ public class NovasContasApagar extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 checkConnection();
+
             }
         });
     }
@@ -185,7 +195,7 @@ public class NovasContasApagar extends AppCompatActivity {
     public void LoadInterticialAd(){
         AdRequest adRequest = new AdRequest.Builder().build();
 
-        InterstitialAd.load(this,String.valueOf("ca-app-pub-3940256099942544/1033173712"), adRequest,
+        InterstitialAd.load(this,String.valueOf("ca-app-pub-7099783455876849/3315422269"), adRequest,
                 new InterstitialAdLoadCallback() {
                     @Override
                     public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
@@ -296,8 +306,8 @@ public class NovasContasApagar extends AppCompatActivity {
         usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         //document reference total Contas À pagar
-        DocumentReference documentReferenceC = db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                .collection("Total Contas A Pagar").document("Total");
+        DocumentReference documentReferenceC = db.collection(usuarioID).document("ContasApagar")
+                .collection("TotalContasAPagar").document("Total");
 
         documentReferenceC.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
@@ -315,8 +325,8 @@ public class NovasContasApagar extends AppCompatActivity {
                     Map<String, Object> valorTotalC = new HashMap<>();
                     valorTotalC.put("ResultadoDaSomaSaidaC", SomaSaidaCv);
 
-                    db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                            .collection("Total Contas A Pagar").document("Total").set(valorTotalC).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    db.collection(usuarioID).document("ContasApagar")
+                            .collection("TotalContasAPagar").document("Total").set(valorTotalC).addOnCompleteListener(new OnCompleteListener<Void>() {
                                 @Override
                                 public void onComplete(@NonNull Task<Void> task) {
 
@@ -333,8 +343,8 @@ public class NovasContasApagar extends AppCompatActivity {
                     Map<String, Object> valorTotalC = new HashMap<>();
                     valorTotalC.put("ResultadoDaSomaSaidaC", ValorCvString);
 
-                    db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                            .collection("Total Contas A Pagar").document("Total").set(valorTotalC).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    db.collection(usuarioID).document("ContasApagar")
+                            .collection("TotalContasAPagar").document("Total").set(valorTotalC).addOnCompleteListener(new OnCompleteListener<Void>() {
                                 @Override
                                 public void onComplete(@NonNull Task<Void> task) {
 
@@ -366,8 +376,8 @@ public class NovasContasApagar extends AppCompatActivity {
 
         String dataSaida = dataFormat;
         String formaPagament = binding.autoCompleteTextForm.getText().toString();
-        String formaPagamento = "Saída realizada por " + formaPagament;
         String categoria = binding.autoCompleteTextCategoria.getText().toString();
+
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         Map<String, Object> contasApagar = new HashMap<>();
@@ -377,13 +387,12 @@ public class NovasContasApagar extends AppCompatActivity {
         contasApagar.put("dataDeSaida", dataSaida);
         contasApagar.put("dataVencimento", dataVencimento);
         contasApagar.put("id", id);
-        contasApagar.put("formPagamento", formaPagamento);
+        contasApagar.put("formPagamento", formaPagament);
         contasApagar.put("idMovimentacao", idMovimentacao);
         contasApagar.put("categoria", categoria);
         usuarioID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        DocumentReference documentReferenceContasApagar = db.collection(usuarioID).document(ano).collection(mes).document("saidas")
-                .collection("ContasApagar").document(id);
+        DocumentReference documentReferenceContasApagar = db.collection(usuarioID).document("ContasApagar").collection("dados").document(id);
 
         documentReferenceContasApagar.set(contasApagar).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
@@ -438,12 +447,9 @@ public class NovasContasApagar extends AppCompatActivity {
         int requestCode = Integer.parseInt(binding.idMotimentacao.getText().toString()); // ID único para o PendingIntent
         // int uniqueId = (int) System.currentTimeMillis();
 
-        int flags;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
-        } else {
-            flags = PendingIntent.FLAG_UPDATE_CURRENT;
-        }
+        int flags = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) ?
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE :
+                PendingIntent.FLAG_UPDATE_CURRENT;
 
         PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), requestCode, intent, flags);
 
@@ -452,10 +458,8 @@ public class NovasContasApagar extends AppCompatActivity {
         if (alarmManager != null) {
             alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
             Toast.makeText(NovasContasApagar.this, "Notificação agendada com sucesso", Toast.LENGTH_SHORT).show();
-            finish();
         } else {
             Toast.makeText(NovasContasApagar.this, "Falha ao agendar a notificação", Toast.LENGTH_SHORT).show();
-            finish();
         }
 
     }
@@ -527,5 +531,23 @@ public class NovasContasApagar extends AppCompatActivity {
         String minuto = String.valueOf(calendar.get(Calendar.MINUTE));
         String segundo = String.valueOf(calendar.get(Calendar.SECOND));
         binding.horaContasApagar.setText(hora +":" + minuto);
+    }
+    public void OuvinteRadioGroup(){
+        binding.radioGroup1.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @SuppressLint("NonConstantResourceId")
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                // checkedId é o ID do RadioButton selecionado no RadioGroup
+                switch (checkedId) {
+                    case R.id.checksSim:
+                        binding.date.setVisibility(View.VISIBLE);
+                        break;
+                    case R.id.checksNao:
+                        binding.date.setVisibility(View.GONE);
+                        break;
+                    // Adicione casos para outros RadioButtons, se necessário
+                }
+            }
+        });
     }
 }

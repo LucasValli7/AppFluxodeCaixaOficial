@@ -1,11 +1,14 @@
 package br.com.lucas.valli.fluxodecaixa.Atividades;
 
+import static br.com.lucas.valli.fluxodecaixa.Classes.ConversorDeMoeda.formatPriceSave;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -15,10 +18,14 @@ import android.graphics.Canvas;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.ads.AdError;
@@ -48,8 +55,10 @@ import java.util.List;
 import java.util.Locale;
 
 import br.com.lucas.valli.fluxodecaixa.Adapter.AdapterDadosEntrada;
+import br.com.lucas.valli.fluxodecaixa.Classes.ConversorDeMoeda;
 import br.com.lucas.valli.fluxodecaixa.Model.DadosEntrada;
 import br.com.lucas.valli.fluxodecaixa.R;
+import br.com.lucas.valli.fluxodecaixa.RecyclerItemClickListener.RecyclerItemClickListener;
 import br.com.lucas.valli.fluxodecaixa.databinding.ActivityTelaPrincipalEntradasBinding;
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
@@ -107,14 +116,287 @@ public class TelaPrincipalEntradas extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(binding.getRoot());
 
+        binding.ListaTipoEntrada.addOnItemTouchListener(new RecyclerItemClickListener(getApplicationContext(), binding.ListaTipoEntrada,
+                new RecyclerItemClickListener.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(View view, int position) {
 
+                    }
+
+                    @Override
+                    public void onLongItemClick(View view, int position) {
+                         DadosEntrada item = dadosEntradas.get(position);
+                        binding.progressBar.setVisibility(View.VISIBLE);
+
+                        // Infla o layout personalizado
+                        LayoutInflater inflater = getLayoutInflater();
+                        View dialogView = inflater.inflate(R.layout.dialog_editar_movimentacao, null);
+                        EditText txt_tipo = dialogView.findViewById(R.id.edit_tipoEntrada);
+                        EditText txt_valor = dialogView.findViewById(R.id.edit_valorEntrada);
+                        EditText txt_formPagamento = dialogView.findViewById(R.id.form_pagament);
+
+                        // Adiciona o TextWatcher ao TextView
+                        if (txt_valor != null) {
+                            txt_valor.addTextChangedListener(new ConversorDeMoeda(dialogView.findViewById(R.id.edit_valorEntrada)));
+                        } else {
+                            Log.e("TAG", "TextView é nulo");
+                        }
+                        DocumentReference documentReferenceDados = db.collection(usuarioID).document(ano).collection(mes).document("entradas").collection("nova entrada")
+                                .document(item.getId());
+
+                        documentReferenceDados.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                DocumentSnapshot documentSnapshot = task.getResult();
+                                if (documentSnapshot.contains("TipoDeEntrada") && documentSnapshot.contains("ValorDeEntrada")
+                                        && documentSnapshot.contains("dataDeEntrada")) {
+
+                                    String valorEntrada = documentSnapshot.getString("ValorDeEntrada");
+                                    String dataEntrada = documentSnapshot.getString("dataDeEntrada");
+                                    String valorEntradaDouble = documentSnapshot.getString("ValorDeEntradaDouble");
+                                    String TipoDeEntrada = documentSnapshot.getString("TipoDeEntrada");
+                                    String formaPagamento = documentSnapshot.getString("formPagamento");
+                                    String idMovimentacao = documentSnapshot.getString("idMovimentacao");
+
+
+                                    txt_tipo.setText(TipoDeEntrada);
+                                    txt_valor.setText(valorEntrada);
+                                    txt_formPagamento.setText(formaPagamento);
+
+                                }
+                            }
+                        });
+
+                        // Cria e mostra o AlertDialog
+                        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(TelaPrincipalEntradas.this);
+                        builder.setView(dialogView)
+                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+
+                                        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                                        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+                                        if (networkInfo == null){
+                                            Log.d("NETCONEX", "SEM INTERNET");
+                                            binding.progressBar.setVisibility(View.VISIBLE);
+                                            Toast.makeText(TelaPrincipalEntradas.this, "Verifique sua conexão com a Internet", Toast.LENGTH_SHORT).show();
+
+                                        }else {
+                                            binding.progressBar.setVisibility(View.GONE);
+
+                                            DocumentReference documentReferenceTotalDiario = db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalEntradaDiario")
+                                                    .document(dia);
+
+                                            DocumentReference documentReferenceTotalMensal = db.collection(usuarioID).document(ano).collection(mes).document("entradas").collection("Total de Entradas")
+                                                    .document("Total");
+
+                                            DocumentReference documentReferenceTotalAnual = db.collection(usuarioID).document(ano).collection("ResumoAnual").document("entradas").collection("TotalEntradaAnual")
+                                                    .document("Total");
+                                            DocumentReference documentReferenceResumo = db.collection(usuarioID).document("resumoCaixa").collection("ResumoDeCaixa").document("entradas").collection("total")
+                                                    .document("ResumoTotal");
+
+                                            documentReferenceResumo.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<DocumentSnapshot> taskResumo) {
+                                                    documentReferenceTotalAnual.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                        @Override
+                                                        public void onComplete(@NonNull Task<DocumentSnapshot> taskAnual) {
+                                                            documentReferenceTotalDiario.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                @Override
+                                                                public void onComplete(@NonNull Task<DocumentSnapshot> taskDiario) {
+                                                                    documentReferenceTotalMensal.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                        @Override
+                                                                        public void onComplete(@NonNull Task<DocumentSnapshot> taskMensal) {
+                                                                            documentReferenceDados.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                                @Override
+                                                                                public void onComplete(@NonNull Task<DocumentSnapshot> taskDados) {
+                                                                                    DocumentSnapshot documentSnapshot = taskDados.getResult();
+                                                                                    DocumentSnapshot documentSnapshotTotalMensal = taskMensal.getResult();
+                                                                                    DocumentSnapshot documentSnapshotTotalDiario = taskDiario.getResult();
+                                                                                    DocumentSnapshot documentSnapshotTotalAual = taskAnual.getResult();
+                                                                                    DocumentSnapshot documentSnapshotTotalResumo = taskResumo.getResult();
+                                                                                    if (documentSnapshot.contains("TipoDeEntrada") && documentSnapshot.contains("ValorDeEntrada")
+                                                                                            && documentSnapshot.contains("dataDeEntrada")) {
+
+                                                                                        String dataEntrada = documentSnapshot.getString("dataDeEntrada");
+                                                                                        String valorEntradaDouble = documentSnapshot.getString("ValorDeEntradaDouble");
+                                                                                        String TipoDeEntrada = documentSnapshot.getString("TipoDeEntrada");
+                                                                                        String formaPagamento = documentSnapshot.getString("formPagamento");
+
+
+                                                                                        //texto campos dialogoCustom
+                                                                                        String txt_tipoString =String.valueOf(txt_tipo.getText());
+                                                                                        String txt_valorString = String.valueOf(txt_valor.getText());
+                                                                                        String txt_formPagamentoString =String.valueOf(txt_formPagamento.getText());
+
+                                                                                        //entradas convertidas para Double
+                                                                                        String str = formatPriceSave(txt_valorString);
+                                                                                        Double valorDoubleEditText = Double.parseDouble(str);
+                                                                                        Double valorDoubleDb = Double.parseDouble(valorEntradaDouble);
+
+                                                                                        //mesmo valor double para String
+                                                                                        String txt_valor = String.valueOf(valorDoubleEditText);
+
+                                                                                        //converter formato moeda
+                                                                                        String ValorEntradaConvertido = NumberFormat.getCurrencyInstance(ptbr).format(valorDoubleEditText);
+
+                                                                                        Log.d("PAGAMENTOOK", txt_tipoString + "\n" + valorDoubleDb + "\n" +txt_formPagamentoString);
+
+                                                                                        if (!txt_tipoString.isEmpty() && !txt_valor.isEmpty()
+                                                                                                && !txt_formPagamentoString.isEmpty()) {
+
+                                                                                            if (!txt_tipoString.equals(TipoDeEntrada)) {
+                                                                                                db.collection(usuarioID).document(ano).collection(mes)
+                                                                                                        .document("entradas")
+                                                                                                        .collection("nova entrada")
+                                                                                                        .document(item.getId()).update("TipoDeEntrada", txt_tipoString);
+                                                                                            }
+
+                                                                                            if (!txt_valor.equals(valorEntradaDouble)) {
+
+                                                                                                if (valorDoubleEditText < valorDoubleDb) {
+                                                                                                    Double op = valorDoubleDb - valorDoubleEditText;
+
+                                                                                                    if (documentSnapshotTotalMensal.contains("ResultadoDaSomaEntrada")) {
+                                                                                                        Double valorTotal = Double.parseDouble(documentSnapshotTotalMensal.getString("ResultadoDaSomaEntrada"));
+                                                                                                        Double op2 = valorTotal - op;
+                                                                                                        db.collection(usuarioID).document(ano).collection(mes).document("entradas").collection("Total de Entradas")
+                                                                                                                .document("Total").update("ResultadoDaSomaEntrada",
+                                                                                                                        String.valueOf(op2));
+
+                                                                                                        db.collection(usuarioID).document(ano).collection("ResumoAnual").document("entradas").collection("TotalEntradaAnual")
+                                                                                                                .document("Total").update("ResultadoTotalEntradaAnual",
+                                                                                                                        String.valueOf(op2));
+
+                                                                                                        documentReferenceResumo.update("ResultadoTotal", String.valueOf(op2));
+
+                                                                                                        db.collection(usuarioID).document(ano).collection(mes)
+                                                                                                                .document("entradas")
+                                                                                                                .collection("nova entrada")
+                                                                                                                .document(item.getId()).update("ValorDeEntrada", ValorEntradaConvertido, "ValorDeEntradaDouble", txt_valor);
+                                                                                                    }
+
+                                                                                                } else if (valorDoubleEditText > valorDoubleDb) {
+                                                                                                    Double op = valorDoubleEditText - valorDoubleDb;
+
+                                                                                                    if (documentSnapshotTotalMensal.contains("ResultadoDaSomaEntrada")) {
+                                                                                                        Double valorTotal = Double.parseDouble(documentSnapshotTotalMensal.getString("ResultadoDaSomaEntrada"));
+                                                                                                        Double op2 = op + valorTotal;
+
+                                                                                                        db.collection(usuarioID).document(ano).collection(mes).document("entradas").collection("Total de Entradas")
+                                                                                                                .document("Total").update("ResultadoDaSomaEntrada",
+                                                                                                                        String.valueOf(op2));
+
+                                                                                                        db.collection(usuarioID).document(ano).collection("ResumoAnual").document("entradas").collection("TotalEntradaAnual")
+                                                                                                                .document("Total").update("ResultadoTotalEntradaAnual",
+                                                                                                                        String.valueOf(op2));
+
+                                                                                                        documentReferenceResumo.update("ResultadoTotal", String.valueOf(op2));
+
+                                                                                                        db.collection(usuarioID).document(ano).collection(mes)
+                                                                                                                .document("entradas")
+                                                                                                                .collection("nova entrada")
+                                                                                                                .document(item.getId()).update("ValorDeEntrada", ValorEntradaConvertido, "ValorDeEntradaDouble", txt_valor);
+
+                                                                                                    }
+
+
+
+                                                                                                }
+
+                                                                                            }
+
+                                                                                            if (!txt_formPagamentoString.equals(formaPagamento)) {
+                                                                                                db.collection(usuarioID).document(ano).collection(mes)
+                                                                                                        .document("entradas")
+                                                                                                        .collection("nova entrada")
+                                                                                                        .document(item.getId()).update("formPagamento", txt_formPagamentoString);
+                                                                                            }
+
+                                                                                            String dataAtual = dia+"/"+mes+"/"+ano;
+                                                                                            // total diario
+                                                                                            if (dataEntrada.equals(dataAtual)){
+                                                                                                if (!txt_valor.equals(valorEntradaDouble)) {
+
+                                                                                                    if (valorDoubleEditText < valorDoubleDb) {
+                                                                                                        Double op = valorDoubleDb - valorDoubleEditText;
+
+                                                                                                        if (documentSnapshotTotalDiario.contains("ResultadoDaSomaEntradaDiario")) {
+                                                                                                            Double valorTotal = Double.parseDouble(documentSnapshotTotalDiario.getString("ResultadoDaSomaEntradaDiario"));
+                                                                                                            Double op2 = valorTotal - op;
+                                                                                                            db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalEntradaDiario")
+                                                                                                                    .document(dia).update("ResultadoDaSomaEntradaDiario",
+                                                                                                                            String.valueOf(op2));
+
+
+                                                                                                        }
+
+                                                                                                    } else if (valorDoubleEditText > valorDoubleDb) {
+                                                                                                        Double op = valorDoubleEditText - valorDoubleDb;
+
+                                                                                                        if (documentSnapshotTotalDiario.contains("ResultadoDaSomaEntradaDiario")) {
+                                                                                                            Double valorTotal = Double.parseDouble(documentSnapshotTotalDiario.getString("ResultadoDaSomaEntradaDiario"));
+                                                                                                            Double op2 = op + valorTotal;
+
+                                                                                                            db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalEntradaDiario")
+                                                                                                                    .document(dia).update("ResultadoDaSomaEntradaDiario",
+                                                                                                                            String.valueOf(op2));
+
+
+                                                                                                        }
+
+
+
+                                                                                                    }
+
+                                                                                                }
+                                                                                            }
+
+                                                                                            onStart();
+                                                                                        }else {
+                                                                                            Toast.makeText(TelaPrincipalEntradas.this, "Preencha todos os campos", Toast.LENGTH_LONG).show();
+                                                                                        }
+
+                                                                                    }
+                                                                                }
+                                                                            });
+                                                                        }
+                                                                    });
+                                                                }
+                                                            });
+                                                        }
+                                                    });
+                                                }
+                                            });
+
+                                        }
+
+
+
+                                    }
+                                })
+                                .setNegativeButton("Cancelar", null);
+                        binding.progressBar.setVisibility(View.GONE);
+
+                        androidx.appcompat.app.AlertDialog dialog = builder.create();
+                        dialog.show();
+
+
+
+
+                    }
+
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                    }
+                }));
         binding.tolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 finish();
             }
         });
-
         binding.AddItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -122,78 +404,19 @@ public class TelaPrincipalEntradas extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-    }
-    public void Initialize(){
-        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+       binding.swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
-            public void onInitializationComplete(InitializationStatus initializationStatus) {
+            public void onRefresh() {
+                refreshData();
             }
         });
-        LoadInterticialAd();
     }
-    public void LoadInterticialAd(){
-        AdRequest adRequest = new AdRequest.Builder().build();
 
-        InterstitialAd.load(this,"ca-app-pub-7099783455876849/3315422269", adRequest,
-                new InterstitialAdLoadCallback() {
-                    @Override
-                    public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
-                        // The mInterstitialAd reference will be null until
-                        // an ad is loaded.
-                        mInterstitialAd = interstitialAd;
-                        mInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback(){
-                            @Override
-                            public void onAdClicked() {
-                                // Called when a click is recorded for an ad.
-                                Log.d("ADSTESTE", "Ad was clicked.");
-                            }
-
-                            @Override
-                            public void onAdDismissedFullScreenContent() {
-                                // Called when ad is dismissed.
-                                // Set the ad reference to null so you don't show the ad a second time.
-                                Log.d("ADSTESTE", "Ad dismissed fullscreen content.");
-                                mInterstitialAd = null;
-                            }
-
-                            @Override
-                            public void onAdFailedToShowFullScreenContent(AdError adError) {
-                                // Called when ad fails to show.
-                                Log.e("ADSTESTE", "Ad failed to show fullscreen content.");
-                                mInterstitialAd = null;
-                            }
-
-                            @Override
-                            public void onAdImpression() {
-                                // Called when an impression is recorded for an ad.
-                                Log.d("ADSTESTE", "Ad recorded an impression.");
-                            }
-
-                            @Override
-                            public void onAdShowedFullScreenContent() {
-                                // Called when ad is shown.
-                                Log.d("ADSTESTE", "Ad showed fullscreen content.");
-                            }
-                        });
-                        Log.i("ADSTESTE", "onAdLoaded");
-                    }
-
-                    @Override
-                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                        // Handle the error
-                        Log.d("ADSTESTE", loadAdError.toString());
-                        mInterstitialAd = null;
-                    }
-                });
-
-
-    }
-    public void ShowIntesticial(){
-        if (mInterstitialAd != null) {
-            mInterstitialAd.show(TelaPrincipalEntradas.this);
-        } else {
-            Log.d("ADSTESTE", "The interstitial ad wasn't ready yet.");
-        }
+    private void refreshData() {
+        new Handler().postDelayed(() -> {
+            checkConnection();
+            binding.swipeRefreshLayout.setRefreshing(false);
+        }, 1000); // Simula um delay de 1 segundos
     }
     public void AbrirCalendario() {
         Date x = new Date();
@@ -252,7 +475,6 @@ public class TelaPrincipalEntradas extends AppCompatActivity {
             }
         });
     }
-
     public void ItemToutchHelper(){
         // efeito Swipe
         ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
@@ -284,114 +506,130 @@ public class TelaPrincipalEntradas extends AppCompatActivity {
                         DocumentReference documentReferenceDiario = db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalEntradaDiario")
                                 .document(dia);
 
-                        documentReferenceAnual.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                        DocumentReference documentReferenceResumo = db.collection(usuarioID).document("resumoCaixa").collection("ResumoDeCaixa").document("entradas").collection("total")
+                                .document("ResumoTotal");
+
+                        documentReferenceResumo.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                             @Override
-                            public void onComplete(@NonNull Task<DocumentSnapshot> taskTotalAnual) {
-                                documentReferenceV.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                            public void onComplete(@NonNull Task<DocumentSnapshot> taskResumo) {
+                                documentReferenceAnual.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                                     @Override
-                                    public void onComplete(@NonNull Task<DocumentSnapshot> taskTotalV) {
-                                        documentReferenceDiario.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                    public void onComplete(@NonNull Task<DocumentSnapshot> taskTotalAnual) {
+                                        documentReferenceV.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                                             @Override
-                                            public void onComplete(@NonNull Task<DocumentSnapshot> taskTotalDiario) {
-                                                DocumentSnapshot documentSnapshotEntradaTotalV = taskTotalV.getResult();
-                                                DocumentSnapshot documentSnapshotTotalDiario = taskTotalDiario.getResult();
+                                            public void onComplete(@NonNull Task<DocumentSnapshot> taskTotalV) {
+                                                documentReferenceDiario.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                    @Override
+                                                    public void onComplete(@NonNull Task<DocumentSnapshot> taskTotalDiario) {
+                                                        DocumentSnapshot documentSnapshotEntradaTotalV = taskTotalV.getResult();
+                                                        DocumentSnapshot documentSnapshotTotalDiario = taskTotalDiario.getResult();
+                                                        DocumentSnapshot documentSnapshotTotalResumo= taskResumo.getResult();
 
-                                                String dataSet = dia + "/" +mes+ "/" + ano;
+                                                        String dataSet = dia + "/" +mes+ "/" + ano;
 
-                                                if (taskTotalAnual.isSuccessful()){
-                                                    DocumentSnapshot documentSnapshotEntradaAnual = taskTotalAnual.getResult();
-                                                    Double totalVDouble = Double.parseDouble(documentSnapshotEntradaTotalV.getString("ValorDeEntradaDouble"));
+                                                        if (taskTotalAnual.isSuccessful()){
+                                                            DocumentSnapshot documentSnapshotEntradaAnual = taskTotalAnual.getResult();
+                                                            Double totalVDouble = Double.parseDouble(documentSnapshotEntradaTotalV.getString("ValorDeEntradaDouble"));
 
-                                                    if (taskTotalDiario.isSuccessful()){
-                                                        if (documentSnapshotEntradaTotalV.contains("dataDeEntrada")){
-                                                            String data = documentSnapshotEntradaTotalV.getString("dataDeEntrada");
-                                                            if (data.equals(dataSet)){
-                                                                if (documentSnapshotTotalDiario.contains("ResultadoDaSomaEntradaDiario")){
-                                                                    Double totalDiario = Double.parseDouble(documentSnapshotTotalDiario.getString("ResultadoDaSomaEntradaDiario"));
-                                                                    Double op = totalDiario - totalVDouble;
-                                                                    String opCvDiario = String.valueOf(op);
+                                                            if (taskTotalDiario.isSuccessful()){
+                                                                if (documentSnapshotEntradaTotalV.contains("dataDeEntrada")){
+                                                                    String data = documentSnapshotEntradaTotalV.getString("dataDeEntrada");
+                                                                    if (data.equals(dataSet)){
+                                                                        if (documentSnapshotTotalDiario.contains("ResultadoDaSomaEntradaDiario")){
+                                                                            Double totalDiario = Double.parseDouble(documentSnapshotTotalDiario.getString("ResultadoDaSomaEntradaDiario"));
+                                                                            Double op = totalDiario - totalVDouble;
+                                                                            String opCvDiario = String.valueOf(op);
 
-                                                                    db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalEntradaDiario")
-                                                                            .document(dia).update("ResultadoDaSomaEntradaDiario", opCvDiario);
+                                                                            db.collection(usuarioID).document(ano).collection(mes).document("ResumoDiario").collection("TotalEntradaDiario")
+                                                                                    .document(dia).update("ResultadoDaSomaEntradaDiario", opCvDiario);
+
+                                                                        }
+                                                                    }
 
                                                                 }
                                                             }
 
-                                                        }
-                                                    }
-
-                                                    if (documentSnapshotEntradaAnual.contains("ResultadoTotalEntradaAnual"));{
-                                                        Double totalAnualDouble = Double.parseDouble(documentSnapshotEntradaAnual.getString("ResultadoTotalEntradaAnual"));
-                                                        Double opDouble = totalAnualDouble - totalVDouble;
-                                                        String cvString = String.valueOf(opDouble);
+                                                            if (documentSnapshotEntradaAnual.contains("ResultadoTotalEntradaAnual"));{
+                                                                Double totalAnualDouble = Double.parseDouble(documentSnapshotEntradaAnual.getString("ResultadoTotalEntradaAnual"));
+                                                                Double opDouble = totalAnualDouble - totalVDouble;
+                                                                String cvString = String.valueOf(opDouble);
 
 
-                                                        db.collection(usuarioID).document(ano).collection("ResumoAnual").document("entradas").collection("TotalEntradaAnual")
-                                                                .document("Total").update("ResultadoTotalEntradaAnual",cvString).addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                                    @Override
-                                                                    public void onSuccess(Void unused) {
-
-                                                                        //document reference total Geral
-                                                                        DocumentReference documentReference = db.collection(usuarioID).document(ano).collection(mes).document("entradas").collection("Total de Entradas")
-                                                                                .document("Total");
-
-                                                                        DocumentReference documentReferenceV = db.collection(usuarioID).document(ano).collection(mes).document("entradas")
-                                                                                .collection("nova entrada").document(item.getId());
-
-                                                                        documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                db.collection(usuarioID).document(ano).collection("ResumoAnual").document("entradas").collection("TotalEntradaAnual")
+                                                                        .document("Total").update("ResultadoTotalEntradaAnual",cvString).addOnSuccessListener(new OnSuccessListener<Void>() {
                                                                             @Override
-                                                                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                                                                                documentReferenceV.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                            public void onSuccess(Void unused) {
+
+                                                                                //document reference total Geral
+                                                                                DocumentReference documentReference = db.collection(usuarioID).document(ano).collection(mes).document("entradas").collection("Total de Entradas")
+                                                                                        .document("Total");
+
+                                                                                DocumentReference documentReferenceV = db.collection(usuarioID).document(ano).collection(mes).document("entradas")
+                                                                                        .collection("nova entrada").document(item.getId());
+
+                                                                                documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                                                                                     @Override
-                                                                                    public void onComplete(@NonNull Task<DocumentSnapshot> taskV) {
-                                                                                        DocumentSnapshot documentSnapshot = task.getResult();
-                                                                                        DocumentSnapshot documentSnapshotV = taskV.getResult();
-                                                                                        if (documentSnapshot.exists()){
-                                                                                            double totalEntrada = Double.parseDouble(documentSnapshot.getString("ResultadoDaSomaEntrada"));
-                                                                                            double totalEntrada3 = Double.parseDouble(documentSnapshotV.getString("ValorDeEntradaDouble"));
-                                                                                            Double op = totalEntrada - totalEntrada3;
-                                                                                            if (op < 0){
-                                                                                                op = 0.0;
+                                                                                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                                                                        documentReferenceV.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                                            @Override
+                                                                                            public void onComplete(@NonNull Task<DocumentSnapshot> taskV) {
+                                                                                                DocumentSnapshot documentSnapshot = task.getResult();
+                                                                                                DocumentSnapshot documentSnapshotV = taskV.getResult();
+                                                                                                if (documentSnapshot.exists()){
+                                                                                                    double totalEntrada = Double.parseDouble(documentSnapshot.getString("ResultadoDaSomaEntrada"));
+                                                                                                    double totalEntrada3 = Double.parseDouble(documentSnapshotV.getString("ValorDeEntradaDouble"));
+                                                                                                    Double op = totalEntrada - totalEntrada3;
+                                                                                                    if (op < 0){
+                                                                                                        op = 0.0;
+                                                                                                    }
+                                                                                                    String cv = String.valueOf(op);
+
+
+                                                                                                    db.collection(usuarioID).document(ano).collection(mes).document("entradas").collection("Total de Entradas")
+                                                                                                            .document("Total").update("ResultadoDaSomaEntrada",cv);
+
+                                                                                                    db.collection(usuarioID).document(ano).collection(mes).document("entradas")
+                                                                                                            .collection("nova entrada")
+                                                                                                            .document(item.getId()).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                                                                @Override
+                                                                                                                public void onComplete(@NonNull Task<Void> task) {
+                                                                                                                    try {
+                                                                                                                        Toast.makeText(TelaPrincipalEntradas.this, "item excluido com sucesso", Toast.LENGTH_LONG).show();
+                                                                                                                        dadosEntradas.remove(position);
+                                                                                                                        adapterDados.notifyDataSetChanged();
+                                                                                                                        onStart();
+                                                                                                                        binding.progressBar.setVisibility(View.GONE);
+                                                                                                                    }catch (IndexOutOfBoundsException e){
+                                                                                                                        Log.i("ErroTry", "erro ao removerItem");
+                                                                                                                    }
+
+
+                                                                                                                }
+                                                                                                            });
+
+                                                                                                }else {
+
+                                                                                                }
                                                                                             }
-                                                                                            String cv = String.valueOf(op);
-
-
-                                                                                            db.collection(usuarioID).document(ano).collection(mes).document("entradas").collection("Total de Entradas")
-                                                                                                    .document("Total").update("ResultadoDaSomaEntrada",cv);
-
-                                                                                            db.collection(usuarioID).document(ano).collection(mes).document("entradas")
-                                                                                                    .collection("nova entrada")
-                                                                                                    .document(item.getId()).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                                                                        @Override
-                                                                                                        public void onComplete(@NonNull Task<Void> task) {
-                                                                                                            try {
-                                                                                                                Toast.makeText(TelaPrincipalEntradas.this, "item excluido com sucesso", Toast.LENGTH_LONG).show();
-                                                                                                                dadosEntradas.remove(position);
-                                                                                                                adapterDados.notifyDataSetChanged();
-                                                                                                                onStart();
-                                                                                                                binding.progressBar.setVisibility(View.GONE);
-                                                                                                            }catch (IndexOutOfBoundsException e){
-                                                                                                                Log.i("ErroTry", "erro ao removerItem");
-                                                                                                            }
-
-
-                                                                                                        }
-                                                                                                    });
-
-                                                                                        }else {
-
-                                                                                        }
+                                                                                        });
                                                                                     }
                                                                                 });
                                                                             }
                                                                         });
-                                                                    }
-                                                                });
 
 
 
+                                                            }
+
+                                                            if (documentSnapshotTotalResumo.contains("ResultadoTotal")){
+                                                                Double totalResumoDouble = Double.parseDouble(documentSnapshotTotalResumo.getString("ResultadoTotal"));
+                                                                Double opDouble = totalResumoDouble - totalVDouble;
+                                                                String cvString = String.valueOf(opDouble);
+                                                                documentReferenceResumo.update("ResultadoTotal",cvString);
+                                                            }
+                                                        }
                                                     }
-                                                }
+                                                });
                                             }
                                         });
                                     }
@@ -426,6 +664,12 @@ public class TelaPrincipalEntradas extends AppCompatActivity {
                         .create()
                         .decorate();
 
+                if (isCurrentlyActive) {
+                    binding.swipeRefreshLayout.setEnabled(false);
+                } else {
+                    binding.swipeRefreshLayout.setEnabled(true);
+                }
+
                 super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
             }
 
@@ -433,18 +677,5 @@ public class TelaPrincipalEntradas extends AppCompatActivity {
         new ItemTouchHelper(simpleCallback).attachToRecyclerView(binding.ListaTipoEntrada);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_principal, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-
-        int itemID = item.getItemId();
-
-        return super.onOptionsItemSelected(item);
-    }
 }
 
